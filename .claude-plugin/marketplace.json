@@ -1,0 +1,22 @@
+{
+  "name": "rara-skills",
+  "owner": {
+    "name": "rararulab",
+    "email": "rararulab@users.noreply.github.com"
+  },
+  "metadata": {
+    "description": "Rara's skill marketplace — agent skills for development, code review, and workflow orchestration",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "dev-skills",
+      "description": "Development workflow skills for orchestrating code implementation, review, and GitHub workflow via acpx",
+      "source": "./",
+      "strict": false,
+      "skills": [
+        "./skills/dev-workflow"
+      ]
+    }
+  ]
+}
