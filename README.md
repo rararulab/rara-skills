@@ -28,6 +28,7 @@ rara skill install rararulab/rara-skills
 | Skill | Description |
 |-------|-------------|
 | [dev-workflow](./skills/dev-workflow) | Orchestrates development via acpx — delegates code to Claude, reviews to Codex |
+| [requirement-to-issues](./skills/requirement-to-issues) | Converts user requirements into structured Linear issues for Symphony + ralph |
 
 ## Creating a Skill
 

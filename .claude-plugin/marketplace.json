@@ -15,7 +15,8 @@
       "source": "./",
       "strict": false,
       "skills": [
-        "./skills/dev-workflow"
+        "./skills/dev-workflow",
+        "./skills/requirement-to-issues"
       ]
     }
   ]
