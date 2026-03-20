@@ -1,8 +1,8 @@
 ---
 name: dev-workflow
 description: >
-  Orchestrates software development tasks by delegating work to Claude and Codex
-  via acpx (Agent Client Protocol). Use this skill whenever rara needs to implement
+  Orchestrates software development tasks by delegating work to Claude Code CLI
+  and Ralph (autonomous agent loop). Use this skill whenever rara needs to implement
   features, fix bugs, review code, analyze requirements, create pull requests, or
   perform any code-related development task. This includes writing code, reviewing
   changes, managing issues, running CI checks, and handling the full development
@@ -10,51 +10,69 @@ description: >
   mentioning agents or workflows explicitly.
 ---
 
-# Dev Workflow: Agent-Delegated Development
+IRON LAW: You never write code directly. Every code change — implementation,
+fix, refactor — is delegated to `claude -p` or Ralph. Your job is planning,
+coordination, and verification. If you catch yourself editing a file, stop.
 
-You are rara, orchestrating development work. You do not write code directly —
-instead you delegate to specialized coding agents via `acpx`, the Agent Client
-Protocol CLI. This separation matters: it keeps your context focused on planning
-and coordination while purpose-built agents handle implementation details.
+## Tools
 
-## Agent Routing
+### Claude Code CLI (`claude`)
 
-Two agents handle different aspects of development:
+Single-task delegation. Use `-p` (print mode) for non-interactive execution.
 
-| Task Type | Agent | Command | Why |
-|-----------|-------|---------|-----|
-| Code implementation | Claude | `acpx claude "<instruction>"` | Deep codebase understanding, multi-file edits, refactoring |
-| Code review | Codex | `acpx codex "<instruction>"` | Fast structured review, pattern detection, security analysis |
-| Requirements analysis | Codex | `acpx codex "<instruction>"` | Spec decomposition, gap analysis, dependency mapping |
-| Bug triage / diagnosis | Codex | `acpx codex "<instruction>"` | Log analysis, root cause identification |
-| Implementation + tests | Claude | `acpx claude "<instruction>"` | Test-first development, integration testing |
-| Documentation writing | Claude | `acpx claude "<instruction>"` | Context-aware doc generation, API docs |
+```bash
+# Analysis (read-only) — no special permissions needed
+claude -p "<instruction>"
 
-**Rule of thumb**: if the task *produces or modifies code*, send it to Claude.
-If the task *analyzes existing code or artifacts* without changing them, send it to Codex.
+# Implementation (writes files) — needs permission bypass
+claude -p --dangerously-skip-permissions "<instruction>"
+
+# Work in a specific worktree — cd into it first
+cd .worktrees/issue-{N}-{name} && claude -p --dangerously-skip-permissions "<instruction>"
+
+# Auto-create isolated worktree
+claude --worktree "<instruction>"
+
+# Use a faster model for quick tasks
+claude -p --model sonnet "<instruction>"
+```
+
+**Rule of thumb**: tasks that *modify code* need `--dangerously-skip-permissions`.
+Tasks that only *analyze* use plain `claude -p`.
+
+### Ralph (Autonomous Agent Loop)
+
+For multi-story features. Ralph runs Claude Code repeatedly in fresh contexts
+until all PRD items are complete. Memory persists via git history, `progress.txt`,
+and `prd.json`.
+
+If Ralph is not installed → load `references/ralph-setup.md` for installation options.
+
+```bash
+./scripts/ralph/ralph.sh --tool claude [max_iterations]  # default: 10
+```
+
+**When to use**: Single task → `claude -p`. Multi-story PRD → Ralph.
+
+## Workflow Checklist
+
+Copy and track progress:
+
+```
+- [ ] 1. Create issue ⚠️ REQUIRED
+- [ ] 2. Create worktree
+- [ ] 3. Delegate work ⛔ BLOCKING on steps 1-2
+- [ ] 4. Verify build ⚠️ REQUIRED
+- [ ] 5. Push & create PR
+- [ ] 6. CI green ⚠️ REQUIRED — do NOT report done until green
+- [ ] 7. Cleanup (after merge)
+```
 
 ## The Development Lifecycle
 
-Every code change — no matter how small — follows this sequence. There are no
-shortcuts. A one-line typo fix goes through the same flow as a major feature.
-The reason: GitHub PR-based workflow creates an auditable trail, enables CI
-validation, and prevents broken code from landing on main.
+### Step 1: Create Issue ⚠️ REQUIRED
 
-```
-1. CREATE ISSUE      →  gh issue create (with labels)
-2. CREATE WORKTREE   →  git worktree add (isolated branch)
-3. DELEGATE WORK     →  acpx claude / acpx codex (in the worktree)
-4. VERIFY            →  cargo check / npm run build
-5. PUSH & CREATE PR  →  git push + gh pr create
-6. WAIT FOR CI GREEN →  gh pr checks --watch
-7. REPORT COMPLETION →  only after CI passes
-8. CLEANUP           →  git worktree remove (after merge)
-```
-
-### Step 1: Create Issue
-
-Every change starts with a GitHub issue. This creates traceability — the issue
-number threads through the branch name, commit messages, and PR body.
+Every change starts with a GitHub issue — even one-line fixes.
 
 ```bash
 gh issue create \
@@ -66,122 +84,66 @@ gh issue create \
 ```
 
 **Labels are mandatory.** Every issue needs three:
-- `created-by:claude` — always required
-- **Type** (pick one): `bug`, `enhancement`, `refactor`, `chore`, `documentation`
-- **Component** (pick one): `core`, `backend`, `ui`, `extension`, `ci`
+- `created-by:claude` — always
+- **Type**: `bug`, `enhancement`, `refactor`, `chore`, `documentation`
+- **Component**: `core`, `backend`, `ui`, `extension`, `ci`
 
 ### Step 2: Create Worktree
-
-Worktrees isolate each change in its own directory and branch. This prevents
-work-in-progress from polluting main and enables parallel development.
 
 ```bash
 git worktree add .worktrees/issue-{N}-{short-name} -b issue-{N}-{short-name}
 ```
 
-Replace `{N}` with the issue number and `{short-name}` with a brief kebab-case
-descriptor (e.g., `issue-42-fix-auth-timeout`).
+### Step 3: Delegate Work ⛔ BLOCKING on steps 1-2
 
-### Step 3: Delegate Work via acpx
-
-This is where the actual development happens. Dispatch the task to the right
-agent, always specifying the worktree directory as the working directory.
-
-#### For Implementation Tasks (→ Claude)
+Navigate into the worktree, then delegate:
 
 ```bash
-acpx --cwd .worktrees/issue-{N}-{short-name} --approve-all claude \
-  "Implement <description>.
+cd .worktrees/issue-{N}-{short-name}
 
-Context:
-- Issue: #{N}
-- Branch: issue-{N}-{short-name}
-- Scope: <which crates/files are affected>
-
-Requirements:
-<clear, specific requirements>
-
-Constraints:
-- All commits must use conventional commit format: <type>(<scope>): <desc> (#N)
-- Include 'Closes #{N}' in commit body
-- Add English doc comments to all new public items
-- Run cargo check before committing"
+claude -p --dangerously-skip-permissions \
+  "Implement <description>. Issue #{N}, branch issue-{N}-{short-name}.
+<requirements and constraints>"
 ```
 
-#### For Code Review (→ Codex)
+For prompt templates (implementation, review, analysis) → load `references/prompt-templates.md`.
+
+For Rust project conventions to include in prompts → load `references/conventions-rust.md`.
+
+#### Multi-Story Features (→ Ralph)
+
+**⛔ CONFIRMATION GATE**: Before launching Ralph, confirm with user:
+- PRD exists and is converted to `prd.json`
+- Max iterations count is acceptable
+- Feature branch is correct
 
 ```bash
-acpx --cwd .worktrees/issue-{N}-{short-name} codex \
-  "Review the changes on this branch for:
-1. Correctness — does the logic handle edge cases?
-2. Security — any injection, overflow, or unsafe patterns?
-3. Architecture — does this follow existing patterns in the codebase?
-4. Missing tests — what scenarios lack coverage?
-
-Output a structured review with severity ratings (critical/warning/info)
-and specific file:line references."
-```
-
-#### For Requirements Analysis (→ Codex)
-
-```bash
-acpx codex \
-  "Analyze this feature request and produce:
-1. A breakdown of required changes (which crates, which modules)
-2. Dependencies between changes (ordering constraints)
-3. Risk assessment (what could break, blast radius)
-4. Estimated complexity per component (small/medium/large)
-
-Feature: <description>"
+./scripts/ralph/ralph.sh --tool claude [max_iterations]
 ```
 
 #### Parallel Workstreams
 
-For independent tasks, use named sessions to run agents in parallel:
+For independent tasks in separate worktrees:
 
 ```bash
-acpx --cwd .worktrees/issue-{A}-{name-a} claude -s issue-{A} "<task A>"
-acpx --cwd .worktrees/issue-{B}-{name-b} claude -s issue-{B} "<task B>"
+cd .worktrees/issue-{A}-{name-a} && claude -p --dangerously-skip-permissions "<task A>" &
+cd .worktrees/issue-{B}-{name-b} && claude -p --dangerously-skip-permissions "<task B>" &
+wait
 ```
 
-Each session is isolated — they do not interfere with each other.
+### Step 4: Verify Build ⚠️ REQUIRED
 
-#### Fire-and-Forget
-
-For non-blocking delegation, add `--no-wait`:
+Always verify in the worktree after the agent finishes:
 
 ```bash
-acpx --no-wait --cwd .worktrees/issue-{N}-{name} claude "<task>"
-```
-
-Check status later with:
-
-```bash
-acpx claude -s issue-{N} status
-```
-
-### Step 4: Verify Builds
-
-After the agent finishes, always verify in the worktree before proceeding.
-Agent-generated code can have subtle issues that only surface during compilation.
-
-```bash
-# Rust backend
 cd .worktrees/issue-{N}-{short-name}
-cargo check -p {crate-name}
-
-# Frontend (if touched)
-cd web && npm run build
-
-# Full pre-commit checks
-just pre-commit
+# Run project-appropriate checks (cargo check, npm run build, etc.)
 ```
 
-If verification fails, send the agent back to fix:
+If verification fails, send the agent back:
 
 ```bash
-acpx --cwd .worktrees/issue-{N}-{short-name} --approve-all claude \
-  "cargo check failed with: <error>. Fix the issue."
+claude -p --dangerously-skip-permissions "Build failed with: <error>. Fix the issue."
 ```
 
 ### Step 5: Push & Create PR
@@ -197,84 +159,64 @@ gh pr create \
   --label "<component-label>"
 ```
 
-Commit messages follow Conventional Commits:
-```
-<type>(<scope>): <description> (#N)
+### Step 6: Wait for CI Green ⚠️ REQUIRED
 
-<optional body explaining why>
-
-Closes #N
-```
-
-Allowed types: `feat`, `fix`, `refactor`, `docs`, `test`, `chore`, `ci`, `perf`,
-`style`, `build`, `revert`.
-
-### Step 6: Wait for CI Green
-
-This is non-negotiable. Never report a PR as complete while CI is pending or
-failing. The user trusts that "done" means "ready to merge."
+Non-negotiable. Never report a PR as complete while CI is pending or failing.
 
 ```bash
 gh pr checks {PR-number} --watch
 ```
 
 If a check fails:
-1. Read the failure log: `gh pr checks {PR-number}`
-2. Send the fix back to the agent: `acpx --cwd .worktrees/... claude "CI failed: <error>. Fix it."`
-3. Push the fix and re-verify: `gh pr checks {PR-number} --watch`
+1. Read the failure: `gh pr checks {PR-number}`
+2. Fix via agent: `cd .worktrees/... && claude -p --dangerously-skip-permissions "CI failed: <error>. Fix it."`
+3. Re-verify: `gh pr checks {PR-number} --watch`
 
 ### Step 7: Cleanup (After Merge)
 
-Once the PR is merged on GitHub:
+**⛔ CONFIRMATION GATE**: Confirm the PR is merged before cleanup.
 
 ```bash
 git worktree remove .worktrees/issue-{N}-{short-name}
 git branch -d issue-{N}-{short-name}
 ```
 
-## Code Review Workflow
+## Code Review
 
-When asked to review code (a PR, a branch, or specific files), always delegate
-to Codex. Structure the review request to get actionable feedback:
+Delegate all reviews to Claude in read-only mode (no `--dangerously-skip-permissions`):
 
 ```bash
-# Review a PR
-acpx codex "Review PR #{N}. Focus on:
+claude -p "Review PR #{N}. Focus on:
 - Breaking changes or API contract violations
-- Error handling gaps (unwrap on user input, missing context)
+- Error handling gaps
 - Test coverage for new code paths
-- Performance implications (unnecessary allocations, N+1 queries)
+- Performance implications
 Provide findings as: [CRITICAL|WARNING|INFO] file:line — description"
-
-# Review before merge
-acpx codex "This PR is about to merge. Final review checklist:
-1. Are all public items documented?
-2. Do commit messages follow conventional commits?
-3. Are there any TODO/FIXME/HACK comments that should be tracked as issues?
-4. Does the AGENT.md need updating?"
 ```
 
-## Conventions to Enforce
+For detailed review prompt templates → load `references/prompt-templates.md`.
 
-When delegating to agents, always include these constraints in your instructions:
+## Anti-Patterns
 
-1. **Conventional Commits** — every commit message must be `<type>(<scope>): <desc> (#N)`
-2. **English comments only** — all code comments, doc comments, and string literals in English
-3. **Doc comments on public items** — `///` for every `pub fn`, `pub struct`, `pub enum`, `pub trait`
-4. **snafu for errors** — no manual `impl Display + impl Error`
-5. **No noop trait impls** — trait methods must have real implementations (except optional UX hooks)
-6. **No hardcoded defaults** — configuration comes from YAML, not Rust code
-7. **AGENT.md for new crates** — every new crate ships with agent guidelines
+Do NOT:
+- **Write code directly** — always delegate, even for "just one line"
+- **Skip issue creation** for "quick fixes" — every change needs traceability
+- **Merge without CI green** — "it's probably fine" is never acceptable
+- **Delegate without specifying the worktree** — agent will edit wrong directory
+- **Launch Ralph without user confirmation** — it runs autonomously and costs tokens
+- **Use `--dangerously-skip-permissions` for read-only tasks** — principle of least privilege
+- **Re-delegate blindly on failure** — read the error output first, then craft a targeted fix instruction
 
 ## Troubleshooting
 
-**acpx not installed**: Install with `npm install -g acpx@latest` or use `npx acpx@latest` as a prefix.
+**Claude CLI not installed**: `npm install -g @anthropic-ai/claude-code`
 
-**Session stale or crashed**: `acpx claude sessions new` to create a fresh session. Dead sessions are auto-detected on next prompt.
+**Ralph not set up**: Load `references/ralph-setup.md` for installation options.
 
-**Agent not responding**: Check `acpx claude status` for process health. If dead, the next prompt will auto-reconnect.
+**Permission errors with `claude -p`**: Add `--dangerously-skip-permissions` for
+tasks that modify files. Only use in trusted directories.
 
-**CI keeps failing**: Read the full error output before re-delegating. Common causes:
-- Clippy warnings (`-D warnings` makes them errors)
-- Missing `cargo +nightly fmt` formatting
+**CI keeps failing**: Read full error output before re-delegating. Common causes:
+- Lint warnings treated as errors
+- Formatting not applied
 - Failing tests from unhandled edge cases
