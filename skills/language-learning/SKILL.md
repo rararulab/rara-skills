@@ -28,7 +28,7 @@ At conversation start, run `kotoba status`.
 brew install rararulab/tap/kotoba
 
 # From source
-git clone https://github.com/rararulab/kotoba && cd kotoba && zig build -Doptimize=ReleaseSafe && cp zig-out/bin/kotoba /usr/local/bin/
+git clone https://github.com/rararulab/kotoba && cd kotoba && cargo install --path .
 ```
 
 Do NOT proceed without kotoba. It is the core dependency — all vocabulary

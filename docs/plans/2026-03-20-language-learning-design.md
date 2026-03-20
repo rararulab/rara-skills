@@ -155,18 +155,16 @@ CREATE TABLE user_profile (
 
 | 组件 | 选型 | 理由 |
 |------|------|------|
-| 语言 | Zig | 单二进制、极小体积、完美 C FFI |
-| 数据库 | SQLite（C 库直接链接） | Zig 的 C interop 强项 |
+| 语言 | Rust | 成熟生态（clap/rusqlite/serde/reqwest）、单二进制 |
+| 数据库 | SQLite（rusqlite） | 成熟稳定的 Rust binding |
 | TTS | VOICEVOX（本地 REST API） | 免费、高质量、动漫风格声音 |
-| HTTP | Zig std.http.Client | 调用 VOICEVOX API |
-| JSON | Zig std.json | 解析 VOICEVOX 响应、输出结构化数据 |
+| HTTP | reqwest | 调用 VOICEVOX API |
+| JSON | serde + serde_json | 解析 VOICEVOX 响应、输出结构化数据 |
 | 音频缓存 | ~/.kotoba/audio/ | 按词缓存 mp3，避免重复生成 |
 
 ### 已知风险
 
-1. **Zig pre-1.0** — std API 可能跨版本 break，锁定 0.14
-2. **日语 Unicode 处理** — Zig 无内置 Unicode 工具库，需小心处理
-3. **VOICEVOX 依赖** — 用户需要单独安装，首次设置有摩擦
+1. **VOICEVOX 依赖** — 用户需要单独安装，首次设置有摩擦
 
 ## Skill 与 kotoba 的交互流程
 
