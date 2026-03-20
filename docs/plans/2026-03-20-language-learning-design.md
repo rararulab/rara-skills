@@ -90,8 +90,8 @@ Agent 教新词时输出音频路径，用户可选择听发音：
 kotoba status              # 当前等级、已学词汇数、今日待复习
 
 # 词汇管理
-kotoba add <word> <reading> <meaning> [--level N5]
-kotoba seen <word> <quality>   # quality: 0-5 (SM-2 标准)
+kotoba add <word> <reading> <meaning> [--level N5]  # romaji auto-generated from reading
+kotoba seen <word> <quality>   # quality: 1, 3, or 5
 
 # 复习
 kotoba review              # 返回到期复习的词汇列表（JSON）
