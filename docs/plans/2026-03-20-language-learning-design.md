@@ -86,6 +86,10 @@ Agent 教新词时输出音频路径，用户可选择听发音：
 ### 命令
 
 ```bash
+# 环境管理
+kotoba setup               # 初始化 DB + 下载 VOICEVOX Engine + ONNX Runtime
+kotoba doctor              # 检查所有依赖状态（DB、VOICEVOX、模型、磁盘空间）
+
 # 学习状态
 kotoba status              # 当前等级、已学词汇数、今日待复习
 
@@ -98,15 +102,20 @@ kotoba review              # 返回到期复习的词汇列表（JSON）
 kotoba review --grammar    # 返回到期复习的语法列表
 
 # 音频
-kotoba play <word>         # 调用 VOICEVOX 生成 mp3，输出文件路径
-                           # 已缓存的直接返回路径
+kotoba play <word>                 # 用当前 voice 生成音频，输出文件路径
+kotoba play <word> --backend vits  # 指定 TTS 后端
+
+# 声音管理
+kotoba voice list                  # 列出可用声音（VOICEVOX 内置 + HF 已下载）
+kotoba voice set <name>            # 切换当前声音
+kotoba voice add <hf-repo-id>      # 从 HuggingFace 下载 ONNX 语音模型
 
 # 进度
 kotoba progress            # 学习统计（各等级词汇数、掌握率）
 kotoba progress --weekly   # 本周学习量
 
 # 导出
-kotoba export anki         # 导出为 .apkg（调用 genanki 或直接操作 SQLite+zip）
+kotoba export anki         # 导出为 Anki tab-separated
 kotoba export csv          # 导出为 CSV
 kotoba export json         # 导出为 JSON
 ```
@@ -151,20 +160,39 @@ CREATE TABLE user_profile (
 );
 ```
 
+### TTS 架构
+
+```
+kotoba play <word>
+    │
+    ├─ backend: voicevox (默认)
+    │   └─ 内置 VOICEVOX Engine (kotoba setup 自动下载/启动)
+    │   └─ 20+ 内置角色可选
+    │
+    └─ backend: vits / 其他 HuggingFace 模型
+        └─ kotoba voice add <hf-repo-id> 下载 ONNX 模型
+        └─ 用 ort (Rust ONNX Runtime) 本地推理
+        └─ 日语 phonemizer 用 OpenJTalk C 绑定
+```
+
+所有推理在 Rust 原生完成，不依赖 Python。
+
 ### 技术选型
 
 | 组件 | 选型 | 理由 |
 |------|------|------|
-| 语言 | Rust | 成熟生态（clap/rusqlite/serde/reqwest）、单二进制 |
-| 数据库 | SQLite（rusqlite） | 成熟稳定的 Rust binding |
-| TTS | VOICEVOX（本地 REST API） | 免费、高质量、动漫风格声音 |
-| HTTP | reqwest | 调用 VOICEVOX API |
-| JSON | serde + serde_json | 解析 VOICEVOX 响应、输出结构化数据 |
-| 音频缓存 | ~/.kotoba/audio/ | 按词缓存 mp3，避免重复生成 |
+| 语言 | Rust | 成熟生态（clap/sqlx/serde/reqwest）、单二进制 |
+| 数据库 | SQLite（sqlx） | async，与 rara yunara-store 一致 |
+| TTS 默认 | VOICEVOX Engine（本地 REST API） | 免费、高质量、20+ 日语角色 |
+| TTS 扩展 | ort + OpenJTalk | HuggingFace ONNX 模型原生推理 |
+| HTTP | reqwest | 调用 VOICEVOX API、下载模型 |
+| JSON | serde + serde_json | 结构化 IO |
+| 音频缓存 | ~/.kotoba/audio/ | 按词+voice 缓存 WAV |
 
 ### 已知风险
 
-1. **VOICEVOX 依赖** — 用户需要单独安装，首次设置有摩擦
+1. **VOICEVOX Engine 体积** — ~200MB 下载，kotoba setup 自动管理
+2. **HF 模型兼容性** — 不同模型架构需要不同推理管道，初期只支持 VITS ONNX
 
 ## Skill 与 kotoba 的交互流程
 
@@ -192,8 +220,8 @@ CREATE TABLE user_profile (
 | 注音方式 | 罗马字 | 零基础友好，不依赖假名知识 |
 | 水平框架 | JLPT N5→N1 | 标准化、可衡量 |
 | Sub-level 划分 | Agent 动态判断 | 避免僵化，适应个人节奏 |
-| 数据存储 | SQLite via Zig CLI | 可导出、可扩展、与 skill 解耦 |
+| 数据存储 | SQLite via Rust CLI | 可导出、可扩展、与 skill 解耦 |
 | 复习算法 | 软性 SM-2 | 参考遗忘曲线但不死板 |
-| 音频方案 | VOICEVOX → mp3 文件 | 免费、高质量、CLI 友好 |
+| 音频方案 | VOICEVOX 默认 + HF ONNX 扩展 | 开箱即用 + 自定义声优 |
 | 纠错方式 | 温和指出 | 不打断工作流 |
 | 代码仓库 | skill 在 rara-skills，kotoba 独立 repo | 关注点分离 |
