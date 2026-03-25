@@ -1,23 +1,84 @@
 # Prompt Templates for Agent Delegation
 
-## Implementation Prompt
+## Planning Prompt (Planner Role)
+
+Use this to expand a brief request into a concrete spec before delegating.
+Focus on WHAT to deliver, not HOW to implement. Over-specifying causes
+cascading errors when the plan gets something wrong.
 
 ```
-Implement <description>.
+Analyze this request and produce a product spec:
 
-Context:
-- Issue: #{N}
-- Branch: issue-{N}-{short-name}
-- Scope: <which files/modules are affected>
+Request: <1-4 sentence description>
 
-Requirements:
-<clear, specific requirements>
+Produce:
+1. Product context — why this matters, who benefits
+2. Deliverables — concrete, verifiable outcomes (NOT implementation steps)
+3. Acceptance criteria — how to verify each deliverable is complete
+4. Constraints — non-negotiable requirements (API contracts, perf, compat)
+5. Out of scope — what to explicitly NOT do
+6. Risk factors — what could go wrong, blast radius
+
+Be ambitious about scope but stay at the product/design level.
+Do NOT specify file paths, function signatures, or line-level changes.
+The implementing agent will figure out the path.
+```
+
+## Implementation Prompt (Generator Role)
+
+Tell the generator WHAT to deliver. Let it decide HOW.
+
+```
+Implement <description>. Issue #{N}, branch issue-{N}-{short-name}.
+
+Product context:
+<why this change matters>
+
+Deliverables:
+- <concrete outcome 1>
+- <concrete outcome 2>
 
 Constraints:
-- All commits must use conventional commit format: <type>(<scope>): <desc> (#N)
+- All commits: conventional format <type>(<scope>): <desc> (#N)
 - Include 'Closes #{N}' in commit body
 - Add doc comments to all new public items
 - Run build/check before committing
+
+Out of scope:
+- <what NOT to do>
+```
+
+## Evaluation Prompt (Evaluator Role)
+
+Run in a SEPARATE `claude -p` invocation (read-only). Models cannot reliably
+self-evaluate — a fresh context catches issues the generator is blind to.
+
+```
+Evaluate the changes on this branch against these criteria:
+
+1. **Correctness**: Does the logic handle edge cases? Are there errors?
+2. **Completeness**: Are all specified deliverables implemented?
+   Missing features are the #1 failure mode in long-running agent work.
+3. **Architecture**: Does this follow existing codebase patterns?
+4. **Test coverage**: What scenarios lack tests?
+5. **Security**: Any injection, overflow, or unsafe patterns?
+
+For each criterion, rate: PASS / NEEDS_WORK / FAIL
+Provide specific file:line references for any issues found.
+End with a GO / NO_GO verdict and a prioritized fix list if NO_GO.
+```
+
+## Fix Prompt (After Evaluation)
+
+Feed evaluator findings back to the generator. Be surgical — don't re-implement
+working code.
+
+```
+Fix these issues found during evaluation:
+<paste evaluator's prioritized fix list>
+
+Do NOT re-implement working code. Only fix the identified issues.
+Run build/check after each fix.
 ```
 
 ## Code Review Prompt
