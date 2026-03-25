@@ -1,36 +1,74 @@
-# Rara Skills
+# rara-skills
 
-Skills for [Rara](https://github.com/rararulab/rara) — a self-evolving, developer-first personal proactive agent. Skills are folders of instructions and resources that Rara loads dynamically to improve performance on specialized tasks.
+Skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — packaged as a plugin marketplace for the [rara](https://github.com/rararulab/rara) project and general Rust development workflows.
 
-## Install
+## Quick Start
 
-### As Claude Code Plugin Marketplace
+### Install via Claude Code CLI
 
 ```bash
+# Add the marketplace
 /plugin marketplace add rararulab/rara-skills
-```
 
-Then install skills via:
-
-```bash
+# Install all skills
 /plugin install dev-skills@rara-skills
 ```
 
-### As Rara Skill
+### Install via settings.json
 
-```bash
-# Via rara's built-in skill installer
-rara skill install rararulab/rara-skills
+Add to your project's `.claude/settings.json` or user-level `~/.claude/settings.json`:
+
+```json
+{
+  "enabledPlugins": {
+    "dev-skills@rara-skills": true
+  },
+  "extraKnownMarketplaces": {
+    "rara-skills": {
+      "source": {
+        "source": "github",
+        "repo": "rararulab/rara-skills"
+      }
+    }
+  }
+}
 ```
 
-## Skills
+## Updating Skills
 
-| Skill | Description |
-|-------|-------------|
-| [dev-workflow](./skills/dev-workflow) | Orchestrates development via acpx — delegates code to Claude, reviews to Codex |
-| [requirement-to-issues](./skills/requirement-to-issues) | Converts user requirements into structured Linear issues for Symphony + ralph |
+Skills update automatically when Claude Code starts a new session — it pulls the latest from the GitHub repo. No manual action needed.
 
-## Creating a Skill
+To force an update mid-session:
+
+```bash
+/plugin update dev-skills@rara-skills
+```
+
+## Available Skills
+
+### dev-skills plugin
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| [dev-workflow](./skills/dev-workflow/) | `/dev-workflow` | Full development lifecycle: issue → worktree → delegate to claude -p → evaluate → PR → CI. Supports small/medium/large/epic task tiers. |
+| [requirement-to-issues](./skills/requirement-to-issues/) | `/requirement-to-issues` | Converts user requirements into structured GitHub issues with proper labels and templates. |
+
+### Standalone skills (not yet bundled)
+
+| Skill | Command | Description |
+|-------|---------|-------------|
+| [language-learning](./skills/language-learning/) | `/language-learning` | Language learning assistant with spaced repetition and contextual practice. |
+
+## Project vs User Install
+
+| Scope | File | Effect |
+|-------|------|--------|
+| **Project** | `.claude/settings.json` (in repo root) | All team members using Claude Code in this repo get the skills automatically |
+| **User** | `~/.claude/settings.json` | Available in all your projects |
+
+For team projects, commit `.claude/settings.json` to the repo so everyone shares the same skill set.
+
+## Creating Skills
 
 Use the [template](./template/SKILL.md) as a starting point:
 
@@ -43,7 +81,7 @@ description: What this skill does and when to use it.
 # Instructions here
 ```
 
-See [Agent Skills spec](https://agentskills.io) for the full standard.
+Place new skills in `skills/<skill-name>/SKILL.md`. To include them in the marketplace, add the path to `.claude-plugin/marketplace.json`.
 
 ## License
 
