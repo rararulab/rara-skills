@@ -10,7 +10,7 @@
   },
   "plugins": [
     {
-      "name": "dev-skills",
+      "name": "rara",
       "description": "Development workflow skills for orchestrating code implementation, review, and GitHub workflow via acpx",
       "source": "./",
       "strict": false,
