@@ -16,11 +16,14 @@ Copy and track progress:
 ```
 - [ ] ⚠️ 1. Understand the codebase (read AGENT.md, CLAUDE.md, src/, features/)
 - [ ] ⚠️ 2. Check existing step definitions (rara-bdd list)
-- [ ] ⚠️ 3. Write Gherkin .feature content (≥3 scenarios)
-- [ ] 4. Write design spec (files, signatures, constraints)
-- [ ] ⚠️ 5. Self-check (all checklist items pass)
-- [ ] ⛔ 6. Confirm with user before creating issue
-- [ ] 7. Create the GitHub issue
+- [ ] ⚠️ 3. Write plan spec (context, deliverables, constraints, out of scope)
+- [ ] ⚠️ 4. Write Gherkin .feature content (≥3 scenarios per deliverable)
+- [ ] 5. Write design spec (files, signatures, constraints)
+- [ ] ⚠️ 6. Self-check (all checklist items pass)
+- [ ] ⚠️ 7. Submit for bdd-review (GO / NO_GO gate)
+- [ ] 8. Fix based on review feedback (max 2 rounds)
+- [ ] ⛔ 9. Confirm with user before creating issue
+- [ ] 10. Create the GitHub issue(s)
 ```
 
 ### 1. Understand the Codebase ⚠️
@@ -42,9 +45,42 @@ rara-bdd list
 
 If an existing step matches your intent (even partially), reuse its exact wording.
 
-### 3. Write Gherkin .feature Content ⚠️
+### 3. Write Plan Spec ⚠️
 
-Create complete Gherkin content with **at least 3 scenarios**: one happy path, one error case, and one edge case.
+Before writing any Gherkin, produce a plan spec that frames the work:
+
+```markdown
+## Plan Spec
+
+**Product context:** Why this feature exists, what user problem it solves.
+
+**Deliverables:**
+- [ ] Deliverable 1 — brief description
+- [ ] Deliverable 2 — brief description
+
+**Constraints:**
+- Constraint 1 (e.g., must not break existing API)
+- Constraint 2 (e.g., max response time < 200ms)
+
+**Out of scope:**
+- Thing explicitly excluded from this work
+```
+
+The plan spec serves as the contract between design and review. The bdd-review agent will check that every deliverable has corresponding scenarios.
+
+#### Large / Epic Tasks
+
+When the task is too large for a single issue:
+
+1. Write **one plan spec** covering the full scope
+2. Split deliverables into **N groups**, each becoming its own issue
+3. Each issue gets its own `.feature` file with at least 3 scenarios
+4. Number issues with a suffix: `feat(scope): description (1/N)`, `feat(scope): description (2/N)`
+5. Submit **all** `.feature` files to bdd-review together for cross-feature consistency
+
+### 4. Write Gherkin .feature Content ⚠️
+
+Create complete Gherkin content with **at least 3 scenarios per deliverable**: one happy path, one error case, and one edge case.
 
 #### Rules
 
@@ -97,7 +133,7 @@ Scenario: Login with non-existent email returns 404
   Then the response status is 404
 ```
 
-### 4. Write the Design Spec
+### 5. Write the Design Spec
 
 Provide a concise design spec that tells the implementation agent exactly what to build:
 
@@ -106,12 +142,14 @@ Provide a concise design spec that tells the implementation agent exactly what t
 - **Constraints** — invariants, error handling strategy, performance requirements
 - **Dependencies** — any new crates or services required
 
-### 5. Self-Check ⚠️
+### 6. Self-Check ⚠️
 
-Before presenting to the user, verify:
+Before submitting for review, verify:
 
+- [ ] Plan spec has product context, deliverables, constraints, and out of scope
+- [ ] Every deliverable in the plan spec has corresponding scenarios
 - [ ] Valid Gherkin syntax (Feature/Scenario/Given/When/Then structure)
-- [ ] At least 3 scenarios (happy path + error + edge case)
+- [ ] At least 3 scenarios per deliverable (happy path + error + edge case)
 - [ ] Steps are concrete and verifiable (not vague)
 - [ ] Existing steps reused where applicable (checked via `rara-bdd list`)
 - [ ] `"quoted strings"` for string params, bare integers for numbers
@@ -119,11 +157,36 @@ Before presenting to the user, verify:
 - [ ] Feature tagged with `@module-name`
 - [ ] Design spec lists all files to create/modify with signatures
 
-### 6. Confirm with User ⛔
+### 7. Submit for bdd-review ⚠️
 
-Present the complete Gherkin content and design spec to the user. Wait for explicit approval before creating the GitHub issue. Do NOT create the issue without confirmation.
+Submit the following to the bdd-review skill for quality review:
 
-### 7. Create the GitHub Issue
+- Plan spec
+- .feature content
+- Existing steps list (output from `rara-bdd list`)
+- Round number (starts at 1)
+
+Wait for the review verdict:
+
+- **GO** — proceed to step 9 (user confirmation)
+- **NO_GO** — proceed to step 8 (fix and resubmit)
+
+### 8. Fix Based on Review Feedback
+
+When bdd-review returns NO_GO:
+
+1. Read the fix list from the review report
+2. Apply each fix to the .feature content and/or plan spec
+3. Re-run self-check (step 6)
+4. Resubmit to bdd-review with incremented round number
+
+**Max 2 review rounds.** If Round 2 still returns NO_GO, escalate to the user with both review reports and ask for guidance. Do NOT loop further.
+
+### 9. Confirm with User ⛔
+
+Present the complete plan spec, Gherkin content, and design spec to the user. Include the bdd-review verdict (should be GO at this point). Wait for explicit approval before creating the GitHub issue. Do NOT create the issue without confirmation.
+
+### 10. Create the GitHub Issue
 
 Use the `bdd_task.yml` issue template:
 
@@ -134,6 +197,19 @@ gh issue create --template bdd_task.yml \
 ### Description
 
 What should be implemented and why.
+
+### Plan Spec
+
+**Product context:** ...
+
+**Deliverables:**
+- [ ] ...
+
+**Constraints:**
+- ...
+
+**Out of scope:**
+- ...
 
 ### .feature (Acceptance Criteria)
 
@@ -178,6 +254,8 @@ EOF
 - Type label: auto-applied by template (`enhancement`)
 - Component label: one of `core`, `backend`, `frontend`, `cli`, `ci`, `docs`
 
+For **Large / Epic tasks** (N issues), create each issue in sequence with the `(X/N)` suffix in the title and cross-reference the other issues in the Additional Context section.
+
 ## Anti-Patterns
 
 - Writing vague steps like "it works", "result is correct", "operation succeeds"
@@ -185,3 +263,6 @@ EOF
 - Ignoring existing step definitions and creating duplicates
 - Writing only the happy path — always include error + edge cases
 - Creating the issue without user confirmation
+- Skipping the plan spec and jumping straight to Gherkin
+- Skipping bdd-review and going directly to user confirmation
+- Looping more than 2 review rounds without escalating to the user
