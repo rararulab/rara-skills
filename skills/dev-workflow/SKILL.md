@@ -1,13 +1,8 @@
 ---
 name: dev-workflow
 description: >
-  Orchestrates software development tasks by delegating work to Claude Code CLI
-  and Ralph (autonomous agent loop). Use this skill whenever rara needs to implement
-  features, fix bugs, review code, analyze requirements, create pull requests, or
-  perform any code-related development task. This includes writing code, reviewing
-  changes, managing issues, running CI checks, and handling the full development
-  lifecycle — even if the user just says "fix this bug" or "add a feature" without
-  mentioning agents or workflows explicitly.
+  Use when implementing features, fixing bugs, reviewing code, creating PRs,
+  or performing any code-related development task.
 ---
 
 IRON LAW: You never write code directly. Every code change — implementation,
