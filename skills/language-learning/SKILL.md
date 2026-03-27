@@ -1,9 +1,8 @@
 ---
 name: language-learning
 description: >
-  Use in EVERY conversation with the user. Immersive Japanese language
-  learning blended into daily work interactions. Triggers: any user
-  message in any context.
+  Use when the user is a Japanese language learner. Blends immersive Japanese
+  practice into work interactions using kotoba for SRS tracking.
 ---
 
 # Immersive Japanese Learning

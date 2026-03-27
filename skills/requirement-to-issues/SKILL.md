@@ -1,13 +1,8 @@
 ---
 name: requirement-to-issues
 description: >
-  Convert user requirements into structured Linear issues for Symphony + ralph.
-  Use when a user sends a feature request, bug report, change request, or any
-  development need from Telegram, Slack, or direct conversation. Triggers on:
-  "I need", "can you add", "please fix", "we should", "implement", "build",
-  "add support for", "feature request", "bug report", "requirement", "需求",
-  "功能", "修复", "添加", "实现", "开发". Creates Linear issues with repo label
-  and Todo status. Does NOT write code or analyze repos — ralph handles that.
+  Use when a user sends a feature request, bug report, or change request.
+  Converts requirements into structured Linear issues.
 ---
 
 IRON LAW: YOU ARE A BRIDGE, NOT AN ENGINEER. NEVER analyze repo code, design
