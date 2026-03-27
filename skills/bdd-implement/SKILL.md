@@ -34,6 +34,7 @@ gh issue view <N>
 ```
 
 Extract:
+- The **plan spec** (product context, deliverables, constraints) — understand WHY you are building this
 - The `.feature` Gherkin content (acceptance criteria)
 - The design spec (files to create/modify, interface signatures, constraints)
 - The component label (to know which area you are working in)

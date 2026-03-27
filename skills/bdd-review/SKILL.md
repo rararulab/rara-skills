@@ -20,7 +20,7 @@ Copy and track progress:
 - [ ] ⚠️ 4. Review: Step reuse
 - [ ] ⚠️ 5. Review: Living documentation quality
 - [ ] ⚠️ 6. Review: Anti-pattern detection
-- [ ] ⛔ 7. Produce structured verdict (GO / NO_GO)
+- [ ] ⚠️ 7. Produce structured verdict (GO / NO_GO)
 - [ ] 8. If NO_GO, return feedback to bdd-design for fixes
 ```
 
@@ -91,7 +91,7 @@ Flag common BDD anti-patterns.
 | Incidental details | Steps containing irrelevant specifics (e.g., exact timestamps, UUIDs) that make scenarios brittle |
 | Background overuse | Background with more than 3 steps (extract to a named Given step instead) |
 
-### 7. Produce Structured Verdict ⛔
+### 7. Produce Structured Verdict ⚠️
 
 Output the review in this exact format:
 
