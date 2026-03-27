@@ -5,7 +5,7 @@ description: "Use when implementing a BDD-specced GitHub issue, writing step def
 
 # BDD Implement Skill
 
-**IRON LAW: NEVER modify the .feature file.** The .feature content is Agent 1's contract. If a scenario seems wrong, add a `needs-design-review` label to the issue and comment — do not change the Gherkin.
+**IRON LAW: NEVER modify the .feature file.** The .feature content is Agent 1's contract and has been reviewed and approved by bdd-review. It is locked. If a scenario seems wrong, add a `needs-design-review` label to the issue and comment — do not change the Gherkin.
 
 You are Agent 2 (the implementation agent). Take a GitHub issue created by Agent 1 and deliver working code with all BDD tests passing.
 
