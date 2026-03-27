@@ -1,6 +1,6 @@
 # rara-skills
 
-Skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — packaged as a plugin marketplace for the [rara](https://github.com/rararulab/rara) project and general Rust development workflows.
+Skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — packaged as a plugin marketplace for the [rara](https://github.com/rararulab/rara) project and general development workflows.
 
 ## Quick Start
 
@@ -10,8 +10,8 @@ Skills for [Claude Code](https://docs.anthropic.com/en/docs/claude-code) — pac
 # Add the marketplace
 /plugin marketplace add rararulab/rara-skills
 
-# Install all skills
-/plugin install dev-skills@rara-skills
+# Install the plugin
+/plugin install rara@rara-skills
 ```
 
 ### Install via settings.json
@@ -21,7 +21,7 @@ Add to your project's `.claude/settings.json` or user-level `~/.claude/settings.
 ```json
 {
   "enabledPlugins": {
-    "dev-skills@rara-skills": true
+    "rara@rara-skills": true
   },
   "extraKnownMarketplaces": {
     "rara-skills": {
@@ -34,54 +34,45 @@ Add to your project's `.claude/settings.json` or user-level `~/.claude/settings.
 }
 ```
 
-## Updating Skills
+## Updating
 
-Skills update automatically when Claude Code starts a new session — it pulls the latest from the GitHub repo. No manual action needed.
+### Automatic check
 
-To force an update mid-session:
+On every Claude Code session start, rara-skills checks for new [GitHub Releases](https://github.com/rararulab/rara-skills/releases). If a newer version exists, you'll see:
 
-```bash
-/plugin update dev-skills@rara-skills
 ```
+⬆ rara-skills v1.2.0 可用（当前 v1.1.0），运行 /rara-upgrade 升级
+```
+
+### Manual upgrade
+
+```
+/rara-upgrade
+```
+
+Supports both git-based and marketplace installations. After upgrading, restart Claude Code to load the new version.
 
 ## Available Skills
 
-### dev-skills plugin
-
-| Skill | Command | Description |
-|-------|---------|-------------|
-| [dev-workflow](./skills/dev-workflow/) | `/dev-workflow` | Full development lifecycle: issue → worktree → delegate to claude -p → evaluate → PR → CI. Supports small/medium/large/epic task tiers. |
-| [requirement-to-issues](./skills/requirement-to-issues/) | `/requirement-to-issues` | Converts user requirements into structured GitHub issues with proper labels and templates. |
-
-### Standalone skills (not yet bundled)
-
-| Skill | Command | Description |
-|-------|---------|-------------|
-| [language-learning](./skills/language-learning/) | `/language-learning` | Language learning assistant with spaced repetition and contextual practice. |
+| Skill | Description |
+|-------|-------------|
+| [dev-workflow](./skills/dev-workflow/) | Full development lifecycle: issue → worktree → delegate → evaluate → PR → CI |
+| [requirement-to-issues](./skills/requirement-to-issues/) | Convert user requirements into structured Linear issues |
+| [language-learning](./skills/language-learning/) | Immersive Japanese learning blended into work interactions via kotoba |
+| [bdd-design](./skills/bdd-design/) | Design BDD scenarios from requirements |
+| [bdd-implement](./skills/bdd-implement/) | Implement BDD scenarios as executable tests |
+| [rara-upgrade](./skills/rara-upgrade/) | Upgrade rara-skills to the latest version |
 
 ## Project vs User Install
 
 | Scope | File | Effect |
 |-------|------|--------|
-| **Project** | `.claude/settings.json` (in repo root) | All team members using Claude Code in this repo get the skills automatically |
+| **Project** | `.claude/settings.json` (in repo root) | All team members get the skills |
 | **User** | `~/.claude/settings.json` | Available in all your projects |
-
-For team projects, commit `.claude/settings.json` to the repo so everyone shares the same skill set.
 
 ## Creating Skills
 
-Use the [template](./template/SKILL.md) as a starting point:
-
-```markdown
----
-name: my-skill-name
-description: What this skill does and when to use it.
----
-
-# Instructions here
-```
-
-Place new skills in `skills/<skill-name>/SKILL.md`. To include them in the marketplace, add the path to `.claude-plugin/marketplace.json`.
+Use the [template](./template/SKILL.md) as a starting point. Place new skills in `skills/<skill-name>/SKILL.md`.
 
 ## License
 

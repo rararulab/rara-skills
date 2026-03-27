@@ -1,0 +1,14 @@
+{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "bun \"${CLAUDE_PLUGIN_ROOT}/scripts/rara-update-check.ts\" 2>/dev/null || true"
+          }
+        ]
+      }
+    ]
+  }
+}
