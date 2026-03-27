@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.2.0](https://github.com/rararulab/rara-skills/compare/v1.1.0...v1.2.0) (2026-03-27)
+
+
+### Features
+
+* **bdd:** add bdd-review skill and update bdd-design with plan spec ([#14](https://github.com/rararulab/rara-skills/issues/14)) ([#17](https://github.com/rararulab/rara-skills/issues/17)) ([83b6163](https://github.com/rararulab/rara-skills/commit/83b6163a31c23b89838447f2c41b5b47b5cfbf00))
+
 ## [1.1.0](https://github.com/rararulab/rara-skills/compare/v1.0.0...v1.1.0) (2026-03-27)
 
 
