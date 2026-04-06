@@ -1,6 +1,12 @@
 # Prompt System Design
 
-A standardized prompt authoring framework for rara-skills, extending the Polanyi-based prompt-refinery into a seven-layer model with diagnosis, testing, and execution tooling.
+A standardized prompt authoring framework for rara-skills, built on three thinking frameworks:
+
+- **Polanyi's tacit knowledge** — prompts are boundary conditions for emergence, not instruction lists
+- **Musk's first principles** — decompose prompts to fundamentals before rebuilding; challenge inherited patterns
+- **Munger's inversion** — identify what guarantees prompt failure first, then design to make each failure mode structurally impossible
+
+Extends the Polanyi-based prompt-refinery into a seven-layer model with diagnosis, testing, and execution tooling.
 
 ## Problem
 
@@ -217,7 +223,26 @@ Never in prompt (externalized): linter rules, format configs, full API reference
 
 Cross-cutting concern spanning all layers, in three phases.
 
-### Phase 1: Pre-write Diagnosis (Input)
+### Phase 0: Inversion Analysis (Munger)
+
+Before looking for what's good, ask: "What would guarantee this prompt fails?"
+
+| Failure mode | What to look for |
+|-------------|-----------------|
+| Sycophancy lock-in | No external reality (L3), model can only optimize for pleasing user |
+| Brittleness | All rules, no anchors — model cannot generalize beyond exact scenarios |
+| Token waste | Budget spent on things tools already enforce |
+| Emergence suppression | Over-specified steps leaving no room for model judgment |
+| Context blindness | No state machine — model lost in multi-turn flows |
+
+### Phase 1: First-Principles Decomposition (Musk)
+
+Before rewriting, answer three questions:
+- **What is the fundamental output?** Strip away format preferences, style wishes. What must this prompt produce?
+- **What does the model already know?** Which parts teach the model things from training data? These are candidates for deletion or compression into anchors.
+- **What is genuinely new information?** Only the user's specific context, constraints, and judgment criteria. This is what the prompt budget should go to.
+
+### Phase 2: Line-by-line Classification (Polanyi)
 
 Classify every line of an existing prompt:
 
@@ -240,17 +265,21 @@ Classify every line of an existing prompt:
 | Token total | < 1000 | 1000-1500 | > 1500 |
 | Few-shot annotated | 100% | Partial | None |
 
-### Phase 2: Post-write Depth Test (Output Verification)
+### Phase 3: Depth Test (Output Verification)
 
-Five-question self-check:
+Seven-question self-check, each traced to its thinking framework:
 
-1. **Can I fully predict the output?** → Yes: over-constrained, loosen rules
-2. **Can I judge whether output is good?** → Yes: correct balance ✅
-3. **Can I judge at all?** → No: under-constrained, add boundaries
-4. **Would a different user get different quality?** → Yes: L3 too weak, model pleasing user not standard
-5. **Does removing any layer degrade quality?** → No: that layer is redundant, delete it
+| # | Source | Question | If Yes |
+|---|--------|----------|--------|
+| 1 | Polanyi | Can I fully predict the output? | Over-constrained — loosen rules |
+| 2 | Polanyi | Can I judge output quality? | Correct balance |
+| 3 | Polanyi | Unable to judge at all? | Under-constrained — add boundaries |
+| 4 | Munger | Would different users get different quality? | L3 too weak — model pleasing user not standard |
+| 5 | Munger | Are any of the 5 structural failure modes still present? | Inversion incomplete — fix before shipping |
+| 6 | Musk | Is every line traceable to a fundamental need? | If not, it's inherited convention — challenge or delete |
+| 7 | Musk | Does removing any layer not degrade quality? | That layer is redundant — delete it |
 
-### Phase 3: A/B Comparison (Continuous Improvement)
+### Phase 4: A/B Comparison (Continuous Improvement)
 
 Keep original and optimized prompts. Run same task with both:
 - Compare output quality (human judgment)
