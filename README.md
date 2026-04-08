@@ -54,15 +54,39 @@ Supports both git-based and marketplace installations. After upgrading, restart 
 
 ## Available Skills
 
+### Development workflow
+
 | Skill | Description |
 |-------|-------------|
 | [dev-workflow](./skills/dev-workflow/) | Full development lifecycle: issue → worktree → delegate → evaluate → PR → CI |
 | [requirement-to-issues](./skills/requirement-to-issues/) | Convert user requirements into structured Linear issues |
-| [language-learning](./skills/language-learning/) | Immersive Japanese learning blended into normal task conversations (no CLI required) |
-| [bdd-design](./skills/bdd-design/) | Design BDD scenarios from requirements |
-| [bdd-implement](./skills/bdd-implement/) | Implement BDD scenarios as executable tests |
-| [prompt-refinery](./skills/prompt-refinery/) | Optimize prompts using the Polanyi tacit-knowledge framework |
+
+### BDD (feature-driven development)
+
+| Skill | Description |
+|-------|-------------|
+| [bdd-design](./skills/bdd-design/) | Design BDD scenarios from requirements, write Gherkin acceptance criteria |
+| [bdd-review](./skills/bdd-review/) | Review `.feature` files for quality before issue creation |
+| [bdd-implement](./skills/bdd-implement/) | Implement BDD scenarios as executable tests with step definitions |
+
+### Prompt engineering
+
+| Skill | Description |
+|-------|-------------|
 | [prompt-system](./skills/prompt-system/) | Diagnose, optimize, or generate prompts with the seven-layer Polanyi framework |
+| [prompt-refinery](./skills/prompt-refinery/) | Optimize prompts using the Polanyi tacit-knowledge framework (concept anchors + constraint layering) |
+
+### Perspectives (thinking styles)
+
+| Skill | Description |
+|-------|-------------|
+| [matklad-perspective](./skills/matklad-perspective/) | Alex Kladov (matklad) thinking framework — use for IDE/compiler/language design, architecture decisions, testing methodology |
+
+### Other
+
+| Skill | Description |
+|-------|-------------|
+| [language-learning](./skills/language-learning/) | Immersive Japanese learning blended into normal task conversations (no CLI required) |
 | [rara-upgrade](./skills/rara-upgrade/) | Upgrade rara-skills to the latest version |
 
 ## Project vs User Install
