@@ -1,5 +1,16 @@
 # Changelog
 
+## [1.3.0](https://github.com/rararulab/rara-skills/compare/v1.2.0...v1.3.0) (2026-04-08)
+
+
+### Features
+
+* add branch/worktree guards, simplify language-learning, add auto-update design ([45260ac](https://github.com/rararulab/rara-skills/commit/45260ac1a3b4888c6013184758218cb0cda02800))
+* **prompt-system:** integrate first-principles and inversion thinking ([209c31d](https://github.com/rararulab/rara-skills/commit/209c31d4b54c7978385c1c52b133ffc6d502bf35))
+* **prompt:** add prompt-refinery skill based on Polanyi framework ([790f602](https://github.com/rararulab/rara-skills/commit/790f6021117e4f9c4e96e9964f09454f83cf0959))
+* **prompt:** add prompt-system skill and optimize dev-workflow ([ed5986d](https://github.com/rararulab/rara-skills/commit/ed5986d5fb6603a28d14e196e2cf44348dcf9133))
+* **skills:** add matklad-perspective skill ([7093890](https://github.com/rararulab/rara-skills/commit/70938908c56d2b65de361eb51a21d58d85a91fcf))
+
 ## [1.2.0](https://github.com/rararulab/rara-skills/compare/v1.1.0...v1.2.0) (2026-03-27)
 
 
