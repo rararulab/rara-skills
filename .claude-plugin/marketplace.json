@@ -1,13 +1,13 @@
 {
   "name": "rara-skills-dev",
-  "description": "Development marketplace for rara-skills plugin",
+  "description": "Development marketplace for rara-skills plugin with workflow and orchestration skills",
   "owner": {
     "name": "rararulab"
   },
   "plugins": [
     {
       "name": "rara",
-      "description": "Agent skills for development workflow, language learning, and requirement management",
+      "description": "Agent skills for development workflow, team orchestration, language learning, and requirement management",
       "version": "1.3.0",
       "source": "./",
       "author": {
