@@ -65,6 +65,7 @@ Load these reference files when needed:
 - for concrete issue / comment structures → `references/issue-templates.md`
 - for decomposition, assignment, monitoring, and closure decisions → `references/operating-rules.md`
 - for sustained post-dispatch run tracking → switch to `multica-polling`
+- for automatic stage gating / handoff after dispatch → switch to `multica-orchestrator`
 
 Use these primitives:
 - **Issue tree**: parent issue + child issues via `parent_issue_id`

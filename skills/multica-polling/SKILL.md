@@ -16,9 +16,10 @@ The fixed state transition logic lives in:
 
 The skill defines when and how to call that script.
 
-This skill complements `multica-team`.
+This skill complements `multica-team` and `multica-orchestrator`.
 - `multica-team` decides what to dispatch, how to structure issues, and how to verify work
 - this skill defines the tracking contract after dispatch
+- `multica-orchestrator` consumes polling results plus stage artifacts to decide whether automatic handoff is safe
 
 ## Files
 

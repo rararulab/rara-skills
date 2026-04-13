@@ -61,6 +61,7 @@ Supports both git-based and marketplace installations. After upgrading, restart 
 | [dev-workflow](./skills/dev-workflow/) | Full development lifecycle: issue → worktree → delegate → evaluate → PR → CI |
 | [multica-team](./skills/multica-team/) | Rara-led coding orchestration through Multica: issue trees, explicit dispatch contracts, agent assignment, monitoring, verification, and deliberate ship/follow-up decisions |
 | [multica-polling](./skills/multica-polling/) | Scheduler-driven tracking for Multica-dispatched issues: persisted context, polling state machine, retry/timeout policy, and script-backed rescheduling |
+| [multica-orchestrator](./skills/multica-orchestrator/) | Stage-level Multica autonomy layer: validate plan/build/review artifacts, gate handoffs, reschedule corrections, and escalate when automatic transition is unsafe |
 | [requirement-to-issues](./skills/requirement-to-issues/) | Convert user requirements into structured Linear issues |
 
 ### BDD (feature-driven development)
