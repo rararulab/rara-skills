@@ -143,7 +143,7 @@ Use and fill the stage-specific fields:
 ```json
 {
   "schema_version": 1,
-  "stage": "<plan|build|review>",
+  "stage": "<plan|build|review|integration>",
   "status": "ready_for_handoff",
   "summary": "<short factual summary>",
   "comment_id": "<optional-comment-id>",
@@ -365,13 +365,13 @@ Use when the workflow controller approves a transition.
 
 ```md
 ## WORKFLOW_CONTROLLER_DECISION
-stage: <plan|build|review>
+stage: <plan|build|review|integration>
 issue_id: <ISSUE-ID>
 task_id: <TASK-ID or n/a>
 observed_state: <completed|failed|cancelled|poll_error>
 validator_status: <passed|failed|pending>
 decision: <handoff|blocked|done|needs_human>
-next_stage: <build|review|done|n/a>
+next_stage: <build|review|integration|done|n/a>
 artifact_comment_id: <comment-id or n/a>
 artifact_sha256: <sha or n/a>
 

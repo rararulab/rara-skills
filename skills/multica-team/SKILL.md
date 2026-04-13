@@ -452,6 +452,7 @@ If any box is unchecked, fix the contract before dispatch.
 Use when the agent must modify a real repository and push changes.
 
 ```text
+Task: <what to produce>
 Target repo: `<repo-url>`.
 Writable checkout: `<absolute-path>`.
 Work on branch: `<branch-name>`.
@@ -612,8 +613,6 @@ Ready means:
 Do not assign work that still depends on implied boundaries or oral memory.
 
 If the work is controller-managed, confirm the canonical `STAGE_RESULT` contract is present before assignment.
-
-Assignment is dispatch.
 
 Core rule:
 - assigning an issue to a ready agent is the main task-dispatch path
