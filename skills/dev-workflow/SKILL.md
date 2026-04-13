@@ -1,9 +1,23 @@
 ---
 name: dev-workflow
 description: >
-  Use when implementing features, fixing bugs, reviewing code, creating PRs,
-  or performing any code-related development task.
+  Use when the user asks Rara to get code work done. Keep the user-facing
+  contract simple: they describe the outcome, Rara chooses the execution path,
+  and Rara reports progress and results back.
 ---
+
+## L0 — User Contract
+
+The user talks to Rara, not to an internal workflow.
+
+Default contract:
+- the user states the requirement in normal language
+- Rara decides whether to work locally or delegate
+- if Rara delegates, Multica stays behind the curtain as the execution layer
+- Rara reports meaningful status and final outcome back to the user
+
+Do not make the user learn internal role names, lane mechanics, or controller
+concepts unless that trade-off matters to a decision they need to make.
 
 ## L1 — Philosophy
 
@@ -66,7 +80,7 @@ When the workflow requirements conflict with what the user is asking:
 4. Proceed with user's choice only after they've seen the trade-off
 
 Examples of conflicts to surface (do not silently comply):
-- User asks you to write code directly → explain role separation
+- User asks you to choose a different execution path than the default → explain the trade-off
 - User asks to skip issue creation → explain traceability cost
 - User wants to merge with CI pending → state the risk
 - User asks generator to self-evaluate → explain blind spot research
