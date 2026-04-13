@@ -64,6 +64,7 @@ Do orchestration through Multica's real domain model, not an imaginary generic
 Load these reference files when needed:
 - for concrete issue / comment structures → `references/issue-templates.md`
 - for decomposition, assignment, monitoring, and closure decisions → `references/operating-rules.md`
+- for sustained post-dispatch run tracking → switch to `multica-polling`
 
 Use these primitives:
 - **Issue tree**: parent issue + child issues via `parent_issue_id`
@@ -84,7 +85,7 @@ Copy and track progress:
 ```text
 - [ ] 1. Triage the request
 - [ ] ⛔ 2. Decide: Multica team vs direct local work
-- [ ] 3. Write the work contract
+- [ ] ⛔ 3. Write the work contract
 - [ ] 4. Create issue or issue tree
 - [ ] ⛔ 5. Assign only when the issue body is ready
 - [ ] 6. Monitor active execution
@@ -124,7 +125,7 @@ Make the choice explicitly.
 
 If choosing local work, stop using this skill and switch workflows cleanly.
 
-## 3. Write the work contract
+## 3. Write the work contract ⛔
 
 For medium+ tasks, write down:
 - product context
@@ -140,6 +141,126 @@ Do not over-specify file-level tactics just to feel precise.
 Use:
 - `references/issue-templates.md` for concrete issue and comment wording
 - `references/operating-rules.md` for split / ownership / closure decisions
+
+### Dispatch contract: required fields
+
+Never dispatch a Multica task with an implicit repo contract. If the agent must
+write, commit, push, or publish, state exactly where and how. If that
+information is unavailable, explicitly define the fallback output path instead
+of leaving the agent to guess.
+
+Before dispatching, make sure the task text answers all of these:
+
+1. **Target repository**
+   - exact repo URL or canonical repo identity
+   - example: `git@github.com:rararulab/rara-wiki.git`
+
+2. **Writable checkout location**
+   - state the exact writable checkout path if one is already exposed
+   - if no writable checkout is guaranteed, say so explicitly
+
+3. **Branch contract**
+   - exact branch name to use or update
+   - say whether the agent should create it, continue it, or only push to it
+
+4. **Expected delivery mode**
+   - one of:
+     - commit + push
+     - commit + push + PR link
+     - local artifact only
+     - issue comment with paste/summary
+     - artifact + issue comment
+
+5. **Fallback rule**
+   - if writable repo is unavailable, say what counts as a successful fallback
+   - never make the agent infer this
+
+6. **Blocker reporting format**
+   - require exact command, remote, path, and stderr when reporting git/repo failures
+   - `git push failed` alone is not an acceptable blocker report
+
+### Dispatch checklist
+
+Before assigning or posting a corrective follow-up comment, confirm:
+- [ ] target repo is named explicitly
+- [ ] writable checkout path is explicit, or absence is explicit
+- [ ] branch name is explicit
+- [ ] push destination is explicit when push is expected
+- [ ] success artifact is explicit
+- [ ] fallback behavior is explicit
+- [ ] blocker reporting expectations are explicit
+
+If any box is unchecked, fix the contract before dispatch.
+
+### Canonical wording patterns
+
+#### Pattern A: Repo-backed coding task
+
+Use when the agent must modify a real repository and push changes.
+
+```text
+Target repo: `<repo-url>`.
+Writable checkout: `<absolute-path>`.
+Work on branch: `<branch-name>`.
+Push target: `origin <branch-name>`.
+Expected result: commit changes, push branch, and leave a comment with commit SHA and PR link or PR creation URL.
+If blocked, report the exact failing command, current repo path, `git remote -v`, and stderr.
+```
+
+#### Pattern B: Repo may be missing, fallback allowed
+
+Use when the environment may not expose the target repo.
+
+```text
+Goal: produce content suitable for `<target>`.
+If a writable checkout of `<repo>` is available, write the result there.
+If no writable checkout is exposed, fallback to `<artifact path>` plus an issue comment containing either the full deliverable or a precise path to it.
+Do not report missing repo exposure as a git push failure.
+If blocked by something else, include the exact command, path, and stderr.
+```
+
+#### Pattern C: Corrective follow-up comment
+
+Use when an already-running Multica task drifted because the original contract was incomplete.
+
+```text
+This repo/push contract was incomplete in the earlier instruction; here is the authoritative contract:
+- target repo: `<repo>`
+- writable checkout: `<path>` or `not guaranteed`
+- branch: `<branch>`
+- required output: `<delivery mode>`
+- fallback if repo unavailable: `<fallback>`
+Please stop relying on guessed repo wiring. If blocked, paste the exact command, remote, and stderr.
+```
+
+### Nested clone / wrong-origin rules
+
+When you discover a repo cloned from another local checkout instead of directly from the canonical remote:
+- treat it as suspicious until verified
+- do not tell the agent to keep pushing through a nested local-origin setup unless that topology is intentional and explicitly approved
+- prefer one of these:
+  - use the known good writable checkout
+  - create a fresh clone whose `origin` points directly to the canonical remote
+- if the agent already worked in the wrong clone, tell it exactly how to transfer or reapply the changes
+
+### Delivery mode rules
+
+A Multica task is only `done` when it matches the declared delivery mode.
+- if delivery mode is `commit + push`, artifact-only is not done
+- if delivery mode is `artifact + issue comment`, lack of repo access is not a failure
+- if delivery mode is ambiguous, fix the instruction before judging the agent
+
+### Minimal dispatch template
+
+```text
+Task: <what to produce>
+Target repo: <repo-url or none>
+Writable checkout: <absolute path or not guaranteed>
+Branch: <branch name or n/a>
+Delivery mode: <commit+push | commit+push+PR | artifact | artifact+comment>
+Fallback: <exact fallback behavior>
+Blocker report must include: exact command, cwd/repo path, remote, stderr
+```
 
 ## 4. Create issue or issue tree
 
@@ -212,11 +333,19 @@ Rules:
 - include repo paths only when they help orientation
 - keep each issue narrow enough to review cleanly
 - restate the concrete delta in follow-up rounds
+- if write/push/publication is involved, include the full dispatch contract from Step 3
 
 Avoid vague instructions like:
-- "continue"
-- "please fix this"
-- "do more"
+- `continue`
+- `please fix this`
+- `do more`
+
+Also avoid:
+- `please commit the changes` without naming the repo and branch
+- assuming the agent sees the same checkout you see
+- assuming `origin` is correct without saying so
+- treating missing writable repo exposure as agent failure when fallback was not defined
+- mixing `must push` and `artifact is fine` without a priority order
 
 ## 6. Monitor active execution
 
@@ -233,6 +362,10 @@ Preferred pattern:
 - use REST to create / update / assign work
 - use websocket to watch for progress events when available
 - use REST polling as fallback or confirmation
+
+If the task needs durable polling / backoff / scheduled follow-up mechanics,
+switch to `multica-polling` after dispatch rather than bloating this skill with
+poll-loop details.
 
 Watch for:
 - no task created after assignment
@@ -253,11 +386,13 @@ After a Multica round finishes, review:
 - security / safety
 - build / lint / CI status
 - issue status vs actual task outcome
+- whether the result matched the declared delivery mode
 
 Important:
 - task completion does not guarantee issue status was updated correctly
 - issue status alone is not enough evidence that the work is done
 - rara should verify artifact quality and task-run outcome together
+- environment exposure failure and actual git failure are different classes of blocker; do not merge them into one vague conclusion
 
 For larger tasks, record a simple verdict:
 - `GO`
@@ -268,7 +403,7 @@ If the result is insufficient:
 - create a focused child issue for the next round, or
 - reassign intentionally if a different agent should take over
 
-Do not use vague "please continue" retries.
+Do not use vague `please continue` retries.
 
 ## 8. Decide: ship, follow up, split, or reassign ⛔
 
@@ -279,6 +414,7 @@ After verification, make the next move deliberately.
 - acceptance criteria are met
 - tests / lint / build / CI are acceptable
 - no meaningful scope gap remains
+- the declared delivery mode has actually been satisfied
 
 ### Follow up in the same issue when
 - the delta is narrow
@@ -340,6 +476,11 @@ Keep updates short and operational.
 - rewrite ambiguous acceptance criteria
 - prefer a narrow follow-up issue or comment over a broad retry
 
+### Repo contract is incomplete
+- stop and repair the contract before judging the agent
+- post an authoritative corrective comment if the task is already running
+- specify repo, checkout, branch, delivery mode, fallback, and blocker-report requirements explicitly
+
 ### Task is too large
 - split into parent/child issues
 - sequence the children explicitly
@@ -348,6 +489,7 @@ Keep updates short and operational.
 ### One agent is blocked
 - inspect task runs, messages, comments, and blockers
 - decide whether to comment, clarify, split, or reassign
+- require exact command / path / remote / stderr for git-related blockers
 
 ### Verification fails twice
 - stop repeating the same instruction
@@ -372,12 +514,15 @@ Do not:
 - reassign casually out of impatience
 - retry with the same vague instruction twice
 - keep the user in the dark after repeated failures
+- accept vague blocker reports like `push didn't work`
+- rely on guessed repo wiring
 
 ## Pre-delivery checks
 
 Before declaring the work shipped, verify:
 - [ ] the chosen workflow was correct: Multica team vs local direct work
 - [ ] every issue has a clear goal, deliverables, constraints, and acceptance criteria
+- [ ] any repo / branch / delivery / fallback contract is explicit
 - [ ] issue split vs single-issue decision is still sensible
 - [ ] assignment history still reflects real ownership
 - [ ] task runs and artifacts support the claimed outcome
