@@ -14,6 +14,7 @@ Use **parent + child issues** when:
 - implementation and docs are distinct workstreams
 - rollout / migration / cleanup should be tracked independently
 - one prompt would be too broad to verify reliably
+- stage ownership should be explicit across `plan -> build -> review`
 
 Rule of thumb:
 - if success cannot be described with 2–4 concrete acceptance checks, split it
@@ -37,6 +38,7 @@ Avoid comments like:
 - "do more"
 
 Always restate the concrete delta.
+If the stage is controller-managed, always restate which canonical artifact fields must be corrected.
 
 ## 3) Assignment is dispatch
 
@@ -47,6 +49,7 @@ Therefore:
 - do not reassign casually
 - do not bundle unrelated deliverables into one assignee round
 - if ownership changes, leave a handoff comment
+- when the workflow controller approves a transition, use its authoritative handoff note as the source of truth
 
 Good reasons to reassign:
 - agent specialization mismatch
@@ -56,6 +59,7 @@ Good reasons to reassign:
 Bad reasons to reassign:
 - impatience without diagnosis
 - vague hope that another agent will guess better
+- free-form agent suggestion without controller validation
 
 ## 4) Monitor using both push and pull
 
@@ -69,6 +73,7 @@ Watch for:
 - task starts but produces no progress
 - repeated failure or cancellation
 - issue status claiming done while evidence is incomplete
+- stage completion comment missing a canonical `STAGE_RESULT`
 
 If signals conflict, trust artifacts and run history over superficial status labels.
 
@@ -78,12 +83,15 @@ Never close work only because:
 - the agent said it is done
 - the issue status says done
 - one child issue succeeded
+- a comment sounds like a handoff
 
 Close only after checking:
 - requested behavior exists
 - acceptance criteria are actually met
 - tests / lint / build status are acceptable
 - no obvious scope gaps remain
+- canonical `STAGE_RESULT` exists and validates
+- build delivery mode actually matches the dispatch contract
 
 For larger tasks, record a simple verdict:
 - `GO`
@@ -95,6 +103,7 @@ A parent issue can close only when:
 - required child issues are complete
 - the integrated outcome matches the parent goal
 - verification passed at the whole-task level
+- the controller state is `done` or intentionally superseded by a human decision
 
 Do not use parent closure as a convenience marker.
 
@@ -111,6 +120,11 @@ Do not use parent closure as a convenience marker.
 - tighten acceptance criteria
 - consider reassignment only with a clear reason
 
+### If canonical artifact validation fails
+- list exact missing or invalid fields
+- request a corrected `STAGE_RESULT`
+- do not advance ownership yet
+
 ### After two failed rounds overall
 - surface the trade-off to the user
 - explain the blocker plainly
@@ -124,6 +138,7 @@ Split before dispatch if the request includes two or more of these:
 - user-facing changes plus internal refactor
 - implementation plus migration
 - implementation plus documentation / rollout prep
+- different natural owners for plan/build/review
 
 ### When to stay in one issue
 Keep one issue if the task is roughly:
@@ -139,5 +154,22 @@ If an agent misses the mark, improve one of these before retrying:
 - out-of-scope section
 - context facts
 - follow-up precision
+- canonical artifact schema instructions
+- delivery-mode contract clarity
 
 Do not compensate for weak instructions by repeatedly saying the same thing louder.
+
+## 10) Controller-owned handoff principle
+
+Once a workflow is controller-managed:
+- agents submit evidence
+- the controller validates evidence
+- rara posts the authoritative handoff note
+- only then should assignee changes happen
+
+Do not let stage progression be inferred from:
+- issue status alone
+- free-form prose alone
+- an agent's own recommendation alone
+
+The controller is the stage authority.

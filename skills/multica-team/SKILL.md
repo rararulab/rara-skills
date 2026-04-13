@@ -65,7 +65,7 @@ Load these reference files when needed:
 - for concrete issue / comment structures → `references/issue-templates.md`
 - for decomposition, assignment, monitoring, and closure decisions → `references/operating-rules.md`
 - for sustained post-dispatch run tracking → switch to `multica-polling`
-- for automatic stage gating / handoff after dispatch → switch to `multica-orchestrator`
+- for automatic stage gating / controller-owned handoff after dispatch → switch to `multica-orchestrator`
 
 Use these primitives:
 - **Issue tree**: parent issue + child issues via `parent_issue_id`
@@ -78,6 +78,7 @@ Important constraint:
 - there is no reliable user-facing generic `create task` API to bypass issues
 - task creation is driven by issue assignment, comments, mentions, and chat
 - therefore, treat **issues as the primary orchestration unit**
+- if the workflow will auto-advance across `plan -> build -> review`, define the stage issue IDs and canonical `STAGE_RESULT` contract before dispatch
 
 ## Workflow checklist
 
@@ -176,7 +177,11 @@ Before dispatching, make sure the task text answers all of these:
    - if writable repo is unavailable, say what counts as a successful fallback
    - never make the agent infer this
 
-6. **Blocker reporting format**
+6. **Canonical stage result contract**
+   - if this issue is part of a controller-managed workflow, require the final comment to include a fenced JSON `STAGE_RESULT` block
+   - list the required stage-specific fields explicitly
+
+7. **Blocker reporting format**
    - require exact command, remote, path, and stderr when reporting git/repo failures
    - `git push failed` alone is not an acceptable blocker report
 
@@ -189,6 +194,7 @@ Before assigning or posting a corrective follow-up comment, confirm:
 - [ ] push destination is explicit when push is expected
 - [ ] success artifact is explicit
 - [ ] fallback behavior is explicit
+- [ ] canonical `STAGE_RESULT` requirement is explicit for controller-managed stages
 - [ ] blocker reporting expectations are explicit
 
 If any box is unchecked, fix the contract before dispatch.
@@ -250,6 +256,15 @@ A Multica task is only `done` when it matches the declared delivery mode.
 - if delivery mode is `commit + push`, artifact-only is not done
 - if delivery mode is `artifact + issue comment`, lack of repo access is not a failure
 - if delivery mode is ambiguous, fix the instruction before judging the agent
+- if the stage is controller-managed, build completion must include delivery evidence inside canonical `STAGE_RESULT`
+
+### Canonical stage result rules
+
+For controller-managed workflows:
+- each stage issue must require a final fenced JSON `STAGE_RESULT`
+- rara should specify the required stage fields up front
+- free-form prose may explain the result, but the JSON block is the machine-checkable source of truth
+- handoff authority stays with the controller, not with the agent that authored the artifact
 
 ### Minimal dispatch template
 
