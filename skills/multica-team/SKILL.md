@@ -126,6 +126,103 @@ This means:
 - sibling lanes may coordinate, but only through durable comments or canonical artifacts
 - downstream teammates should consume validated artifacts, not guess from prose or status labels
 
+## Status semantics and review flow
+
+Treat issue status as a workflow state, not as a vague activity marker.
+
+### Status meanings
+- `backlog`: captured but not ready to run
+- `todo`: ready for execution
+- `in_progress`: the assigned lane is actively executing or waiting on the current execution round
+- `in_review`: waiting for an explicit review decision on a concrete artifact set
+- `done`: the lane or single-issue objective is complete
+- `blocked`: progress is stopped by a failed review verdict, missing dependency, or missing environment capability
+
+### Core rule for `in_review`
+`in_review` should be brief.
+It means a concrete artifact set already exists and rara is waiting for a review verdict.
+It should not be used as a long-term holding state for tasks that are really complete or really blocked.
+
+### Repo-backed completion hard gate
+For repo-backed coding work, neither a single issue nor a parent objective may close until the delivery chain is real and durable:
+- commit exists on the declared branch
+- PR exists when the delivery mode expects repo-backed review
+- verification proof is recorded in the PR body, issue comments, or both
+- the issue or parent contains a durable summary of what changed and any residual risk
+- an explicit review verdict such as `GO` or `GO_WITH_NOTES` is recorded by the review owner
+
+If any link in that chain is missing:
+- keep the issue in `in_progress` while delivery evidence is still being assembled
+- keep the issue in `in_review` only when the evidence is complete and a review decision is genuinely pending
+- move to `blocked` only when the next required step cannot proceed without outside help
+
+Artifact-only claims, branch-only claims, or agent self-declared completion do not satisfy repo-backed closure.
+
+### Single-issue flow
+For a single issue, use this shape:
+- `todo`
+- `in_progress`
+- `in_review`
+- `done` or `blocked`
+
+Move a single issue into `in_review` only when the reviewable artifact set is real.
+For repo-backed code work, that usually means:
+- commit exists
+- PR exists
+- verification proof exists in the PR body, issue comments, or both
+- the issue contains a durable change summary
+
+Move a single issue from `in_review` to:
+- `done` when there is an explicit review verdict such as `GO` or `GO_WITH_NOTES`
+- `blocked` when review produces `NO_GO`, or when the remaining gap is an external dependency rather than review judgment
+
+### Multi-lane flow
+For staged-team or hybrid work, keep the review decision on the review lane.
+Do not let build lanes sit in `in_review` after their artifact has already been handed off.
+
+Recommended staged flow:
+- plan lane produces a durable handoff artifact, then moves to `done` once consumed
+- build lane produces code, tests, commit, PR, and handoff artifact, then moves to `done` once the review lane has consumed that artifact
+- review lane carries the explicit verdict and then moves to `done` or `blocked`
+- parent issue closes only after all required lanes converge
+
+### Blocked taxonomy and recovery rule
+`blocked` needs a cause type, not just a terminal label.
+
+Use at least these two categories:
+- `quality blocked`: review, validation, or contract checks failed
+- `environment blocked`: missing checkout, missing repo capability, missing credentials, missing toolchain, broken CI primitive, or similar infrastructure gap
+
+Default next action:
+- `quality blocked`: keep the parent open, post the exact defect list or missing evidence, and create or continue a focused recovery round owned by the lane that can fix it
+- `environment blocked`: repair the repo contract or environment first; if a compliant fallback delivery mode exists, use it; otherwise report the exact failing command, repo path, remote, and stderr, then block the affected issue and any parent that cannot proceed without that capability
+
+Do not hide blocked taxonomy from the user behind jargon. rara should translate it into plain status, but the internal contract should preserve the exact blocked cause.
+
+### Parent convergence after child terminal states
+A child moving to `done` means the lane contract was satisfied.
+It does not mean the parent objective is satisfied.
+
+When all required children are `done`, rara must still perform explicit parent convergence:
+- verify the integrated outcome against the parent goal
+- confirm any required convergence note or review lane verdict exists
+- only then move the parent to `done`
+
+When a required child becomes `blocked`:
+- do not close the parent
+- if a recovery round is available inside the current workflow, keep the parent in `in_progress` and create or continue that recovery lane explicitly
+- if no compliant recovery path exists without outside help, move the parent to `blocked`
+
+Optional or superseded lanes should be marked explicitly in the parent record rather than silently counted as required convergence.
+
+### Stale-state correction rule
+When rara finds an issue in `in_review` that already has a durable final state, rara should correct it immediately:
+- if the issue already has a clear `GO` path and the delivery chain is complete, move it to `done`
+- if the issue already has a clear `NO_GO` or an environmental stop, move it to `blocked`
+- if a build artifact has already been consumed by a separate review lane, move the build lane to `done`
+
+This keeps Multica status readable for the user and keeps the internal workflow honest.
+
 ## Team shapes
 
 Choose the simplest shape that fits the work.
@@ -877,6 +974,7 @@ Parent closure rule:
 - do not close the parent because one child succeeded
 - do not use parent closure as a convenience marker
 - close the parent only when all required children are complete and the integrated outcome meets the parent goal
+- if a required child is `blocked`, keep the parent open for an explicit recovery lane or move the parent to `blocked`; never treat a blocked child as implied convergence
 - if the work used parallel lanes, confirm convergence explicitly before parent closure
 
 ## 10. Report back clearly to the user
