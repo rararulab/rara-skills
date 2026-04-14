@@ -1,9 +1,23 @@
 ---
 name: dev-workflow
 description: >
-  Use when implementing features, fixing bugs, reviewing code, creating PRs,
-  or performing any code-related development task.
+  Use when the user asks Rara to get code work done. Keep the user-facing
+  contract simple: they describe the outcome, Rara chooses the execution path,
+  and Rara reports progress and results back.
 ---
+
+## L0 — User Contract
+
+The user talks to Rara, not to an internal workflow.
+
+Default contract:
+- the user states the requirement in normal language
+- Rara decides whether to work locally or delegate
+- if Rara delegates, Multica stays behind the curtain as the execution layer
+- Rara reports meaningful status and final outcome back to the user
+
+Do not make the user learn internal role names, lane mechanics, or controller
+concepts unless that trade-off matters to a decision they need to make.
 
 ## L1 — Philosophy
 
@@ -66,12 +80,53 @@ When the workflow requirements conflict with what the user is asking:
 4. Proceed with user's choice only after they've seen the trade-off
 
 Examples of conflicts to surface (do not silently comply):
-- User asks you to write code directly → explain role separation
+- User asks you to choose a different execution path than the default → explain the trade-off
 - User asks to skip issue creation → explain traceability cost
 - User wants to merge with CI pending → state the risk
 - User asks generator to self-evaluate → explain blind spot research
 
 ## L6 — Interaction Design
+
+### Review-state discipline
+
+Treat `in_review` as a short review gate.
+It means there is already a concrete artifact set and Rara is waiting for an explicit review decision.
+
+For single-issue work, move into `in_review` only when the reviewable package is real:
+- commit exists
+- PR exists when the task is repo-backed
+- verification proof is recorded in the PR body, issue comments, or both
+- the issue contains a durable change summary
+
+Then:
+- move to `done` when review gives a clear `GO` or `GO_WITH_NOTES`
+- move to `blocked` when review gives `NO_GO`, or when the remaining gap is an external dependency rather than a review judgment
+
+For multi-lane work:
+- plan lanes move to `done` after their handoff artifact has been consumed
+- build lanes move to `done` after their artifact has been consumed by the review lane
+- review lanes carry the verdict and move to `done` or `blocked`
+
+If an issue is sitting in `in_review` with an already-clear final state, correct it immediately so the workflow stays readable.
+
+### Repo-backed closure gate
+
+For repo-backed coding tasks, `done` requires a complete delivery chain:
+- commit pushed on the declared branch
+- PR exists when the task is meant to land through normal repo review
+- verification proof is recorded durably
+- the issue contains a durable summary of what changed and any residual risk
+- an explicit review verdict is recorded before closure
+
+If one of those artifacts is missing, the work is not ready for closure even if the code itself looks complete.
+
+### Blocked-state taxonomy
+
+Use `blocked` precisely:
+- `quality blocked`: review or validation failed, so the next move is a focused fix round with the exact defect list
+- `environment blocked`: checkout, repo capability, credentials, toolchain, or similar infrastructure is missing, so the next move is to repair the environment or use the declared fallback path
+
+Do not collapse these into one generic blocker label. The recovery action depends on the blocker type.
 
 ### State Machine
 
@@ -88,8 +143,8 @@ Examples of conflicts to surface (do not silently comply):
 | Triage | User describes task | Tier determined, issue created | Never |
 | Plan | Medium+ tier | Spec written with deliverables | Small tier only |
 | Delegate | Issue + worktree exist | Agent completes, code committed | Never |
-| Verify | Delegation done | Build green + evaluator GO (large+) | Never |
-| Ship | Verification passed | PR created, CI green | Never |
+| Verify | Delegation done | Build green + evaluator GO (large+) + verification proof captured | Never |
+| Ship | Verification passed | PR created, durable issue summary recorded, explicit review verdict recorded, CI green | Never |
 
 **Rollback:**
 - Delegate fails → re-read error, craft targeted fix instruction, re-delegate
