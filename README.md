@@ -81,6 +81,7 @@ Supports both git-based and marketplace installations. After upgrading, restart 
 | Skill | Description |
 |-------|-------------|
 | [matklad-perspective](./skills/matklad-perspective/) | Alex Kladov (matklad) thinking framework — use for IDE/compiler/language design, architecture decisions, testing methodology |
+| [guido-perspective](./skills/guido-perspective/) | Guido van Rossum thinking framework — use for language/API design, readability trade-offs, breaking-change strategy, open-source governance |
 
 ### Other
 
