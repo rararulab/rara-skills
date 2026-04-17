@@ -85,6 +85,7 @@ Supports both git-based and marketplace installations. After upgrading, restart 
 |-------|-------------|
 | [matklad-perspective](./skills/matklad-perspective/) | Alex Kladov (matklad) thinking framework — use for IDE/compiler/language design, architecture decisions, testing methodology |
 | [rob-pike-perspective](./skills/rob-pike-perspective/) | Rob Pike thinking framework — use for Unix-style simplicity, Go/concurrency, tool design, interface and system complexity decisions |
+| [guido-perspective](./skills/guido-perspective/) | Guido van Rossum thinking framework — use for language/API design, readability trade-offs, breaking-change strategy, open-source governance |
 
 ### Other
 
