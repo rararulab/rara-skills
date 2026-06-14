@@ -96,6 +96,7 @@ After an update, run `/reload-plugins` (or restart Claude Code) to activate the 
 | Skill | Description |
 |-------|-------------|
 | [language-learning](./skills/language-learning/) | Immersive Japanese learning blended into normal task conversations (no CLI required) |
+| [shellcrash-custom-rules](./skills/shellcrash-custom-rules/) | Safely add/fix Clash/mihomo custom rules & proxy-groups on a ShellCrash router (flow-style fix + offline test-load gate) |
 
 ## Project vs User Install
 
