@@ -92,6 +92,7 @@ Supports both git-based and marketplace installations. After upgrading, restart 
 | Skill | Description |
 |-------|-------------|
 | [language-learning](./skills/language-learning/) | Immersive Japanese learning blended into normal task conversations (no CLI required) |
+| [shellcrash-custom-rules](./skills/shellcrash-custom-rules/) | Safely add/fix Clash/mihomo custom rules & proxy-groups on a ShellCrash router (flow-style fix + offline test-load gate) |
 | [rara-upgrade](./skills/rara-upgrade/) | Upgrade rara-skills to the latest version |
 
 ## Project vs User Install
