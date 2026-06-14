@@ -36,21 +36,25 @@ Add to your project's `.claude/settings.json` or user-level `~/.claude/settings.
 
 ## Updating
 
-### Automatic check
+rara-skills updates through Claude Code's native plugin system — no custom updater needed.
 
-On every Claude Code session start, rara-skills checks for new [GitHub Releases](https://github.com/rararulab/rara-skills/releases). If a newer version exists, you'll see:
-
-```
-⬆ rara-skills v1.2.0 可用（当前 v1.1.0），运行 /rara-upgrade 升级
-```
-
-### Manual upgrade
+### Manual update
 
 ```
-/rara-upgrade
+/plugin update rara@rara-skills
 ```
 
-Supports both git-based and marketplace installations. After upgrading, restart Claude Code to load the new version.
+### Automatic updates
+
+Enable auto-update for the marketplace in the `/plugin` UI → **Marketplaces** tab. To refresh marketplace metadata manually:
+
+```
+/plugin marketplace update rara-skills
+```
+
+After an update, run `/reload-plugins` (or restart Claude Code) to activate the new version.
+
+> Releases are versioned with [release-please](https://github.com/googleapis/release-please): each release bumps the `version` field in `plugin.json` / `marketplace.json`, which is what the native updater keys off. Pushing commits without a version bump won't surface as an update.
 
 ## Available Skills
 
@@ -93,7 +97,6 @@ Supports both git-based and marketplace installations. After upgrading, restart 
 |-------|-------------|
 | [language-learning](./skills/language-learning/) | Immersive Japanese learning blended into normal task conversations (no CLI required) |
 | [shellcrash-custom-rules](./skills/shellcrash-custom-rules/) | Safely add/fix Clash/mihomo custom rules & proxy-groups on a ShellCrash router (flow-style fix + offline test-load gate) |
-| [rara-upgrade](./skills/rara-upgrade/) | Upgrade rara-skills to the latest version |
 
 ## Project vs User Install
 

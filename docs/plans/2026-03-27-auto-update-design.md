@@ -2,6 +2,13 @@
 
 Date: 2026-03-27
 
+> **Superseded (2026-06):** This custom updater (SessionStart version check + `/rara-upgrade`
+> git-reset skill) has been retired in favor of Claude Code's native plugin update flow
+> (`/plugin update rara@rara-skills` + per-marketplace auto-update). The native system keys off
+> the `version` field that release-please bumps, so the custom checker is redundant and writing
+> into the managed plugin cache dir (`git reset --hard` / clone) fought the cache manager. Kept
+> as a historical design record only. See README "Updating".
+
 ## Goal
 
 让 rara-skills 插件在每次 Claude Code 会话启动时检查新版本，静默提示用户，
