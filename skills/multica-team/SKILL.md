@@ -1,25 +1,35 @@
 ---
 name: multica-team
 description: >
-  Use whenever the user asks rara to handle coding work through Multica. rara
-  should translate the request into Multica-native issues, assign work to agent
-  teammates, track execution through task runs / comments / websocket events,
-  and drive follow-up until the work is verified and shipped.
+  Use when the user asks Rara to get coding work done and Multica is the right
+  execution path. The user-facing contract stays simple: Rara turns the request
+  into Multica work behind the scenes, tracks it, and reports status and
+  results back without making the user manage Multica mechanics.
 ---
 
-IRON LAW: RARA LEADS, MULTICA IMPLEMENTS. FOR CODING WORK, DEFAULT TO TURNING
-THE REQUEST INTO TRACKABLE MULTICA ISSUES AND DRIVING THE TEAM THROUGH TO A
-VERIFIED RESULT. DO NOT START WITH DIRECT LOCAL IMPLEMENTATION UNLESS THE USER
-EXPLICITLY ASKS RARA TO CODE LOCALLY INSTEAD OF USING MULTICA.
+IRON LAW: THE USER TALKS TO RARA. RARA MAY USE MULTICA TO IMPLEMENT, BUT
+MULTICA IS THE INTERNAL EXECUTION LAYER, NOT THE USER-FACING PRODUCT SURFACE.
+
+## User-facing contract
+
+Keep the user contract low-ceremony:
+- the user tells Rara what outcome they want
+- Rara decides whether Multica is the right execution path
+- if Multica is used, Rara translates the request into issues, assignments, and follow-up internally
+- Rara reports progress, blockers, and final outcome back in normal language
+
+Do not make the user choose team shape, lane structure, controller mode, or
+artifact schema unless that detail changes a real product or delivery decision.
 
 ## What this skill is for
 
 This skill is for rara herself.
 
 When the user asks for coding work, the default operating model is:
-- rara is planner / dispatcher / reviewer / closer
-- Multica agents are implementers
-- issues are the source of truth for execution
+- Rara owns the user conversation
+- Multica owns delegated execution
+- issues are the durable source of truth for execution
+- Rara turns Multica state into user-readable status
 - verification happens before ship, not after
 
 This skill is for:
@@ -37,7 +47,9 @@ Do not use this skill for:
 
 ## Decision rule: Multica team or direct local work?
 
-Default answer: **use Multica team**.
+Default answer: **the user talks to Rara; Rara chooses the execution path**.
+
+Use Multica team by default when delegated execution adds value.
 
 Use this skill when one or more are true:
 - the user asked rara to handle coding work and did not explicitly request local coding
@@ -51,7 +63,7 @@ Switch to direct local implementation only when one or more are true:
 - the user needs an in-session local patch rather than team dispatch
 
 If there is tension between the workflow and the user's request, surface it plainly:
-- state the default team workflow
+- state the default execution path
 - state the reason for it
 - state the trade-off of bypassing it
 - follow the user's explicit choice
@@ -70,6 +82,10 @@ Load these reference files when needed:
 - for sustained post-dispatch run tracking → switch to `multica-polling`
 - for automatic stage gating / controller-owned handoff after dispatch → switch to `multica-orchestrator`
 
+These references are for rara and internal agents.
+Do not front-load this vocabulary to the user unless it is necessary to explain
+an actual trade-off or blocker.
+
 Use these primitives:
 - **Issue tree**: parent issue + child issues via `parent_issue_id`
 - **Dispatch**: assign issue to an agent with `assignee_type=agent` and `assignee_id`
@@ -81,7 +97,7 @@ Important constraint:
 - there is no reliable user-facing generic `create task` API to bypass issues
 - task creation is driven by issue assignment, comments, mentions, and chat
 - therefore, treat **issues as the primary orchestration unit**
-- if the workflow will auto-advance across `plan -> build -> review`, define the stage issue IDs and canonical `STAGE_RESULT` contract before dispatch
+- if the workflow will auto-advance under the controller, define the relevant issue IDs and canonical result artifact contract before dispatch
 
 Protocol authority:
 - `references/team-protocol-v0.1.md` is the authoritative team model for role boundaries, handoff rules, convergence, gates, and closure
@@ -93,12 +109,15 @@ Protocol authority:
 Multica should be run as a **team coordination system**, not just a one-issue
 one-agent dispatcher.
 
-Use this mental model:
+Use this mental model internally:
 - **rara** is the team lead
 - **parent issue** is the team board / shared objective
 - **child issue** is a teammate-owned lane
 - **controller comment** is shared memory with authority
 - **canonical artifact** is the durable handoff medium between teammates
+
+The user does not need this model to ask for work.
+Rara should absorb that complexity and expose only useful status.
 
 This means:
 - a child issue is not just a task ticket; it defines ownership for one lane of work
@@ -106,6 +125,103 @@ This means:
 - reassignment is ownership transfer, not a routine retry button
 - sibling lanes may coordinate, but only through durable comments or canonical artifacts
 - downstream teammates should consume validated artifacts, not guess from prose or status labels
+
+## Status semantics and review flow
+
+Treat issue status as a workflow state, not as a vague activity marker.
+
+### Status meanings
+- `backlog`: captured but not ready to run
+- `todo`: ready for execution
+- `in_progress`: the assigned lane is actively executing or waiting on the current execution round
+- `in_review`: waiting for an explicit review decision on a concrete artifact set
+- `done`: the lane or single-issue objective is complete
+- `blocked`: progress is stopped by a failed review verdict, missing dependency, or missing environment capability
+
+### Core rule for `in_review`
+`in_review` should be brief.
+It means a concrete artifact set already exists and rara is waiting for a review verdict.
+It should not be used as a long-term holding state for tasks that are really complete or really blocked.
+
+### Repo-backed completion hard gate
+For repo-backed coding work, neither a single issue nor a parent objective may close until the delivery chain is real and durable:
+- commit exists on the declared branch
+- PR exists when the delivery mode expects repo-backed review
+- verification proof is recorded in the PR body, issue comments, or both
+- the issue or parent contains a durable summary of what changed and any residual risk
+- an explicit review verdict such as `GO` or `GO_WITH_NOTES` is recorded by the review owner
+
+If any link in that chain is missing:
+- keep the issue in `in_progress` while delivery evidence is still being assembled
+- keep the issue in `in_review` only when the evidence is complete and a review decision is genuinely pending
+- move to `blocked` only when the next required step cannot proceed without outside help
+
+Artifact-only claims, branch-only claims, or agent self-declared completion do not satisfy repo-backed closure.
+
+### Single-issue flow
+For a single issue, use this shape:
+- `todo`
+- `in_progress`
+- `in_review`
+- `done` or `blocked`
+
+Move a single issue into `in_review` only when the reviewable artifact set is real.
+For repo-backed code work, that usually means:
+- commit exists
+- PR exists
+- verification proof exists in the PR body, issue comments, or both
+- the issue contains a durable change summary
+
+Move a single issue from `in_review` to:
+- `done` when there is an explicit review verdict such as `GO` or `GO_WITH_NOTES`
+- `blocked` when review produces `NO_GO`, or when the remaining gap is an external dependency rather than review judgment
+
+### Multi-lane flow
+For staged-team or hybrid work, keep the review decision on the review lane.
+Do not let build lanes sit in `in_review` after their artifact has already been handed off.
+
+Recommended staged flow:
+- plan lane produces a durable handoff artifact, then moves to `done` once consumed
+- build lane produces code, tests, commit, PR, and handoff artifact, then moves to `done` once the review lane has consumed that artifact
+- review lane carries the explicit verdict and then moves to `done` or `blocked`
+- parent issue closes only after all required lanes converge
+
+### Blocked taxonomy and recovery rule
+`blocked` needs a cause type, not just a terminal label.
+
+Use at least these two categories:
+- `quality blocked`: review, validation, or contract checks failed
+- `environment blocked`: missing checkout, missing repo capability, missing credentials, missing toolchain, broken CI primitive, or similar infrastructure gap
+
+Default next action:
+- `quality blocked`: keep the parent open, post the exact defect list or missing evidence, and create or continue a focused recovery round owned by the lane that can fix it
+- `environment blocked`: repair the repo contract or environment first; if a compliant fallback delivery mode exists, use it; otherwise report the exact failing command, repo path, remote, and stderr, then block the affected issue and any parent that cannot proceed without that capability
+
+Do not hide blocked taxonomy from the user behind jargon. rara should translate it into plain status, but the internal contract should preserve the exact blocked cause.
+
+### Parent convergence after child terminal states
+A child moving to `done` means the lane contract was satisfied.
+It does not mean the parent objective is satisfied.
+
+When all required children are `done`, rara must still perform explicit parent convergence:
+- verify the integrated outcome against the parent goal
+- confirm any required convergence note or review lane verdict exists
+- only then move the parent to `done`
+
+When a required child becomes `blocked`:
+- do not close the parent
+- if a recovery round is available inside the current workflow, keep the parent in `in_progress` and create or continue that recovery lane explicitly
+- if no compliant recovery path exists without outside help, move the parent to `blocked`
+
+Optional or superseded lanes should be marked explicitly in the parent record rather than silently counted as required convergence.
+
+### Stale-state correction rule
+When rara finds an issue in `in_review` that already has a durable final state, rara should correct it immediately:
+- if the issue already has a clear `GO` path and the delivery chain is complete, move it to `done`
+- if the issue already has a clear `NO_GO` or an environmental stop, move it to `blocked`
+- if a build artifact has already been consumed by a separate review lane, move the build lane to `done`
+
+This keeps Multica status readable for the user and keeps the internal workflow honest.
 
 ## Team shapes
 
@@ -192,7 +308,7 @@ Teammates may coordinate across lanes, but coordination must be durable and audi
 Allowed coordination media:
 - issue comments
 - parent issue summaries
-- canonical `STAGE_RESULT` artifacts
+- canonical controller artifacts such as `LANE_RESULT`
 - controller-authored handoff notes
 
 Do not treat these as authoritative on their own:
@@ -309,7 +425,9 @@ If choosing local work, stop using this skill and switch workflows cleanly.
 
 ### Decide the team shape
 
-If you stay in Multica, choose one of these deliberately:
+If you stay in Multica, choose one of these deliberately.
+This is an internal execution choice; do not offload it to the user unless the
+trade-off itself needs approval:
 - **single-agent** for one coherent deliverable
 - **staged-team** for `plan -> build -> review`
 - **parallel-lanes** for separable workstreams
@@ -415,8 +533,8 @@ Before dispatching, make sure the task text answers all of these:
    - never make the agent infer this
 
 6. **Canonical stage result contract**
-   - if this issue is part of a controller-managed workflow, require the final comment to include a fenced JSON `STAGE_RESULT` block
-   - list the required stage-specific fields explicitly
+   - if this issue is part of a controller-managed workflow, require the final comment to include the canonical fenced JSON artifact expected by the controller, such as `LANE_RESULT`
+   - list the required lane- or stage-specific fields explicitly
 
 7. **Blocker reporting format**
    - require exact command, remote, path, and stderr when reporting git/repo failures
@@ -437,7 +555,7 @@ Before assigning or posting a corrective follow-up comment, confirm:
 - [ ] push destination is explicit when push is expected
 - [ ] success artifact is explicit
 - [ ] fallback behavior is explicit
-- [ ] canonical `STAGE_RESULT` requirement is explicit for controller-managed stages
+- [ ] canonical controller artifact requirement is explicit for controller-managed work
 - [ ] blocker reporting expectations are explicit
 - [ ] team shape is explicit when work spans multiple lanes
 - [ ] lane boundary is explicit when more than one teammate is involved
@@ -503,13 +621,13 @@ A Multica task is only `done` when it matches the declared delivery mode.
 - if delivery mode is `commit + push`, artifact-only is not done
 - if delivery mode is `artifact + issue comment`, lack of repo access is not a failure
 - if delivery mode is ambiguous, fix the instruction before judging the agent
-- if the stage is controller-managed, build completion must include delivery evidence inside canonical `STAGE_RESULT`
+- if the workflow is controller-managed, completion must include delivery evidence inside the canonical controller artifact
 
-### Canonical stage result rules
+### Canonical controller artifact rules
 
 For controller-managed workflows:
-- each stage issue must require a final fenced JSON `STAGE_RESULT`
-- rara should specify the required stage fields up front
+- each controller-managed issue must require the final fenced JSON artifact expected by that controller, such as `LANE_RESULT`
+- rara should specify the required fields up front
 - free-form prose may explain the result, but the JSON block is the machine-checkable source of truth
 - handoff authority stays with the controller, not with the agent that authored the artifact
 
@@ -612,7 +730,7 @@ Ready means:
 
 Do not assign work that still depends on implied boundaries or oral memory.
 
-If the work is controller-managed, confirm the canonical `STAGE_RESULT` contract is present before assignment.
+If the work is controller-managed, confirm the canonical controller artifact contract is present before assignment.
 
 Core rule:
 - assigning an issue to a ready agent is the main task-dispatch path
@@ -856,6 +974,7 @@ Parent closure rule:
 - do not close the parent because one child succeeded
 - do not use parent closure as a convenience marker
 - close the parent only when all required children are complete and the integrated outcome meets the parent goal
+- if a required child is `blocked`, keep the parent open for an explicit recovery lane or move the parent to `blocked`; never treat a blocked child as implied convergence
 - if the work used parallel lanes, confirm convergence explicitly before parent closure
 
 ## 10. Report back clearly to the user
